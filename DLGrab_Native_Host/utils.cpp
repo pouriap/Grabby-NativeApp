@@ -4,6 +4,7 @@
 #include "utf8.h"
 
 using namespace std;
+using namespace ggicci;
 
 utils::utils(void)
 {
@@ -40,4 +41,19 @@ string utils::getSpecialPath(REFKNOWNFOLDERID rfid)
 	string stPath = utf8::narrow(path);
 	CoTaskMemFree(path);
 	return stPath;
+}
+
+Json utils::parseJSON(string JSONstr)
+{
+	try
+	{
+		Json json = Json::Parse(JSONstr.c_str());
+		return json;
+	}
+	catch (exception& e)
+	{
+		string msg = "error parsing json\n";
+		msg.append(e.what());
+		throw msg;
+	}
 }
