@@ -3,6 +3,8 @@
 #include <string>
 #include "utils.h"
 
+#define LOG(x) utils::log(x)
+
 using namespace std;
 using namespace ggicci;
 
@@ -28,22 +30,22 @@ string messaging::get_message()
 
 		if(feof(stdin))
 		{
-			utils::log("EOF");
+			LOG("EOF");
 		}
 
 		if(ferror(stdin))
 		{
-			utils::log("ERROR");
+			LOG("ERROR");
 		}
 
-		utils::log("message len: ");
-		utils::log(message_length);
-		utils::log("bytes read: ");
-		utils::log(bytes_read);
+		LOG("message len: ");
+		LOG(message_length);
+		LOG("bytes read: ");
+		LOG(bytes_read);
 
 		if(bytes_read != 4 || message_length <=0 || message_length > 2048)
 		{
-			utils::log("bad data");
+			LOG("bad data");
 			exit(EXIT_SUCCESS);
 		}
 	}
@@ -60,14 +62,14 @@ string messaging::get_message()
 
 		if(bytes_read != message_length)
 		{
-			utils::log("read bytes: ");
-			utils::log(bytes_read);
+			LOG("read bytes: ");
+			LOG(bytes_read);
 		}
 
 		string m(message, 0, message_length);
 		delete message;
 
-		utils::log(m.c_str());
+		LOG(m.c_str());
 
 		return m;
 	}

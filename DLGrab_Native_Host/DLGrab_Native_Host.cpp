@@ -1,4 +1,9 @@
+//TODO: make stdout binary in flashgot nativehost
+//TODO: make flashgot nativehost message lenght logic like this one
+
 #include "stdafx.h"
+
+#define LOG(x) utils::log(x)
 
 #define MSG_TYPE_ERROR 1
 
@@ -31,7 +36,7 @@ int main(int argc, char *argv[])
 	/* Set "stdin" to have binary mode: */
 	int result = _setmode( _fileno( stdin ), _O_BINARY );
 	if( result == -1 ){
-		utils::log("cannot set stdin mode to binary");
+		LOG("cannot set stdin mode to binary");
 		exit(EXIT_FAILURE);
 	}
 
@@ -46,7 +51,7 @@ int main(int argc, char *argv[])
 		catch(string exp_msg)
 		{
 			messaging::sendMessage(MSG_TYPE_ERROR, exp_msg);
-			utils::log(exp_msg.c_str());
+			LOG(exp_msg.c_str());
 		}
     }
 }
