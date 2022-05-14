@@ -10,6 +10,6 @@ public:
 	~messaging(void);
 	static std::string get_message();
 	static void sendMessage(const ggicci::Json &msg);
-	static void sendMessage(int type, std::string content);
+	static void sendMessage(int type, const std::string &content);
 };
 

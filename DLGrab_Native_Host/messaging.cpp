@@ -91,7 +91,7 @@ void messaging::sendMessage(const Json &msg)
 	fflush(stdout);
 }
 
-void messaging::sendMessage(int type, string content)
+void messaging::sendMessage(int type, const string &content)
 {
 	Json json = Json::Parse("{}");
 	json.AddProperty("type", Json(type));
