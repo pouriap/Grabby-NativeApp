@@ -84,6 +84,13 @@ int main(int argc, char *argv[])
 	{
 		messaging::sendMessage(MSG_TYPE_ERROR, exp_msg);
 		LOG(exp_msg.c_str());
+		exit(EXIT_FAILURE);
+	}
+	catch(...)
+	{
+		messaging::sendMessage(MSG_TYPE_ERROR, "an unknown exception occured");
+		LOG("an unknown exception occured");
+		exit(EXIT_FAILURE);
 	}
 
 	//the loop for sending/receiving messages
@@ -99,6 +106,11 @@ int main(int argc, char *argv[])
 		{
 			messaging::sendMessage(MSG_TYPE_ERROR, exp_msg);
 			LOG(exp_msg.c_str());
+		}
+		catch(...)
+		{
+			messaging::sendMessage(MSG_TYPE_ERROR, "an unknown exception occured");
+			LOG("an unknown exception occured");
 		}
     }
 }
