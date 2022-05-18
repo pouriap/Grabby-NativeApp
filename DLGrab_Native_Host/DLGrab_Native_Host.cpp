@@ -26,6 +26,12 @@ void handleType1(const Json &msg)
 	messaging::sendMessage(json);
 }
 
+void handleType2(const Json &msg)
+{
+	string dms = utils::launchExe("flashgot.exe");
+	messaging::sendMessageRaw(dms);
+}
+
 //using the reference of the Json object because pass by value caused exception because of copy constructor error
 void processMessage(const Json &msg)
 {
@@ -36,8 +42,18 @@ void processMessage(const Json &msg)
 		{
 			handleType1(msg);
 		}
+		else if(type == "get_available_dms")
+		{
+			handleType2(msg);
+		}
 	}
-	catch(exception &e)
+	//if it's one of my own thrown exceptions throw it higher
+	catch(string &s)
+	{
+		throw s;
+	}
+	//otherwise throw this
+	catch(...)
 	{
 		throw string("unexpected JSON content in message");
 	}

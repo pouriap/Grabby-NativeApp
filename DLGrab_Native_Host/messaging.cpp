@@ -82,19 +82,23 @@ string messaging::get_message()
 
 }
 
-void messaging::sendMessage(const Json &msg)
-{
-	string JSONstr = msg.ToString();
-	const unsigned int message_length = JSONstr.length();
-	fwrite(&message_length, sizeof(char), 4, stdout);
-	fwrite(JSONstr.c_str(), sizeof(char), message_length, stdout);
-	fflush(stdout);
-}
-
 void messaging::sendMessage(int type, const string &content)
 {
 	Json json = Json::Parse("{}");
 	json.AddProperty("type", Json(type));
 	json.AddProperty("content", Json(content));
 	sendMessage(json);
+}
+
+void messaging::sendMessage(const ggicci::Json &msg)
+{
+	sendMessageRaw(msg.ToString());
+}
+
+void messaging::sendMessageRaw(const string &content)
+{
+	const unsigned int message_length = content.length();
+	fwrite(&message_length, sizeof(char), 4, stdout);
+	fwrite(content.c_str(), sizeof(char), message_length, stdout);
+	fflush(stdout);
 }

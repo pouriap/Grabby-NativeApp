@@ -7,7 +7,7 @@
 class utils
 {
 public:
-	static const string DLG_ID;
+	static const std::string DLG_ID;
 
 	utils(void);
 	~utils(void);
@@ -19,5 +19,6 @@ public:
 	static bool mkdir(const std::string &dirName);
 	static bool dirExists(const std::string &dirName_in);
 	static std::string getDLGTempDir();
+	static std::string launchExe(const std::string &exeName);
 };
 
