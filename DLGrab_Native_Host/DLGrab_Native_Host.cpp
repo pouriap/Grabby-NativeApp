@@ -28,8 +28,22 @@ void handleType1(const Json &msg)
 
 void handleType2(const Json &msg)
 {
-	string dms = utils::launchExe("flashgot.exe");
-	messaging::sendMessageRaw(dms);
+	//TODO: output this directoy from flashgot.exe
+	string fgOutput = utils::launchExe("flashgot.exe");
+	Json dmsJSON = Json::Parse(fgOutput.c_str());
+	Json res = Json::Parse("{}");
+	res.AddProperty("type", Json("available_dms"));
+	Json dms = Json::Parse("[]");
+	for(int i=0; i<dmsJSON.Size(); i++)
+	{
+		if(dmsJSON[i]["available"].AsBool())
+		{
+			string name = dmsJSON[i]["name"].AsString();
+			dms.Push(Json(name));
+		}
+	}
+	res.AddProperty("availableDMs", dms);
+	messaging::sendMessage(res);
 }
 
 //using the reference of the Json object because pass by value caused exception because of copy constructor error
@@ -52,10 +66,16 @@ void processMessage(const Json &msg)
 	{
 		throw s;
 	}
+	catch(exception &e)
+	{
+		string msg = "error parsing JSON: ";
+		msg.append(e.what());
+		throw string(msg);
+	}
 	//otherwise throw this
 	catch(...)
 	{
-		throw string("unexpected JSON content in message");
+		throw string("unexpected error occured");
 	}
 }
 

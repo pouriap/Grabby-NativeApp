@@ -5,6 +5,7 @@
 #include "fileapi.h"
 
 #define LOG(x) utils::log(x)
+#define FLG_JSON_BUF_SIZE 4000
 
 using namespace std;
 using namespace ggicci;
@@ -213,15 +214,15 @@ string utils::launchExe(const std::string &exeName)
 		CloseHandle(h_child_stdout_w);
 		CloseHandle(h_child_stdin_r);
 
-		char buf[3000];
-		for(int i=0; i<3000; i++)
+		char buf[FLG_JSON_BUF_SIZE];
+		for(int i=0; i<FLG_JSON_BUF_SIZE; i++)
 		{
 			buf[i] = '\0';
 		}
 		unsigned long dwRead = 0;
 		bSuccess = FALSE;
 
-		bSuccess = ReadFile(h_child_stdout_r, buf, 3000, &dwRead, NULL);
+		bSuccess = ReadFile(h_child_stdout_r, buf, FLG_JSON_BUF_SIZE, &dwRead, NULL);
 		if(!bSuccess || dwRead==0)
 		{
 			throw string("failed to launch process");
