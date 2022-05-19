@@ -28,13 +28,13 @@ int main(int argc, char *argv[])
 	}
 	catch(string exp_msg)
 	{
-		messaging::sendMessage("error", exp_msg);
+		messaging::sendMessage("flashgot_output", exp_msg);
 		LOG(exp_msg.c_str());
 		exit(EXIT_FAILURE);
 	}
 	catch(...)
 	{
-		messaging::sendMessage("error", "an unknown exception occured");
+		messaging::sendMessage("flashgot_output", "an unknown exception occured");
 		LOG("an unknown exception occured");
 		exit(EXIT_FAILURE);
 	}
@@ -48,14 +48,21 @@ int main(int argc, char *argv[])
 			Json &msg = utils::parseJSON(raw_message);
 			processMessage(msg);
 		}
-		catch(string exp_msg)
+		catch(string &exp_msg)
 		{
-			messaging::sendMessage("error", exp_msg);
+			messaging::sendMessage("flashgot_output", exp_msg);
 			LOG(exp_msg.c_str());
+		}
+		catch(std::length_error &e)
+		{
+			messaging::sendMessage("flashgot_output", e.what());
+			LOG(e.what());
+			//we exit after a length error because otherwise we'll end up in a loop
+			exit(EXIT_FAILURE);
 		}
 		catch(...)
 		{
-			messaging::sendMessage("error", "an unknown exception occured");
+			messaging::sendMessage("flashgot_output", "an unknown exception occured");
 			LOG("an unknown exception occured");
 		}
     }
@@ -213,7 +220,7 @@ void flashGot(const string &jobText)
 	}
 	catch(string &e)
 	{
-		string msg = "creating job: ";
+		string msg = "creating job file failed: ";
 		msg.append(e);
 		throw msg;
 	}

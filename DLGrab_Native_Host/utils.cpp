@@ -236,6 +236,7 @@ string utils::launchExe(const string &exeName, const string &args)
 		unsigned long dwRead = 0;
 		bSuccess = FALSE;
 
+		//TODO: throws exception when there is no output
 		bSuccess = ReadFile(h_child_stdout_r, buf, FLG_JSON_BUF_SIZE, &dwRead, NULL);
 		if(!bSuccess || dwRead==0)
 		{

@@ -28,6 +28,8 @@ string messaging::get_message()
 		//it blocks until 4 bytes is read
 		int bytes_read = fread(&message_length, sizeof(char), 4, stdin);
 
+		//TODO: remove these?
+		/*
 		if(feof(stdin))
 		{
 			LOG("EOF");
@@ -42,17 +44,16 @@ string messaging::get_message()
 		LOG(message_length);
 		LOG("bytes read: ");
 		LOG(bytes_read);
+		*/
 
-		if(bytes_read != 4 || message_length <=0 || message_length > 2048)
+		if(bytes_read != 4 || message_length <=0)
 		{
-			LOG("bad data");
-			exit(EXIT_SUCCESS);
+			throw "bad message length";
 		}
 	}
-	catch(exception &e){
-		string msg = "bad length data\n";
-		msg.append(e.what());
-		throw msg;
+	catch(...){
+		throw std::length_error("bad message length");
+		//TODO: investigate further, and if below part also needs to throw such thing
 	}
 
 	try
@@ -78,6 +79,10 @@ string messaging::get_message()
 		string msg = "error reading raw message\n";
 		msg.append(e.what());
 		throw msg;
+	}
+	catch(...)
+	{
+		throw "unexpected error when reading raw message";
 	}
 
 }
