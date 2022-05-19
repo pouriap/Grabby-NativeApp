@@ -6,19 +6,26 @@
 
 class utils
 {
-public:
-	static const std::string DLG_ID;
 
+public:
+	//variables
+	static const std::string DLG_ID;
+	//functions
 	utils(void);
 	~utils(void);
 	static void log(const char* msg);
 	static void log(unsigned int msg);
-	static std::string getSpecialPath(REFKNOWNFOLDERID rfid);
 	static ggicci::Json parseJSON(const std::string &JSONstr);
-	static std::string getTempPath();
+	static std::string getNewTempFileName();
 	static bool mkdir(const std::string &dirName);
-	static bool dirExists(const std::string &dirName_in);
 	static std::string getDLGTempDir();
 	static std::string launchExe(const std::string &exeName);
+	static std::string launchExe(const std::string &exeName, const std::string &args);
+
+private:
+	static std::string getSpecialPath(REFKNOWNFOLDERID rfid);
+	static std::string getTempPath();
+	static bool dirExists(const std::string &dirName_in);
+
 };
 

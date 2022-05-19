@@ -3,6 +3,7 @@
 #include "utils.h"
 #include "utf8.h"
 #include "fileapi.h"
+#include <ctime>
 
 #define LOG(x) utils::log(x)
 #define FLG_JSON_BUF_SIZE 4000
@@ -85,6 +86,15 @@ std::string utils::getTempPath()
 	}	
 }
 
+string utils::getNewTempFileName()
+{
+	std::time_t t = std::time(nullptr);
+	string time = std::to_string(t);
+	string filename = utils::getDLGTempDir();
+	filename.append("\\job_").append(time).append(".fgt");
+	return filename;
+}
+
 bool utils::mkdir(const string &dirName)
 {
 	if(utils::dirExists(dirName)){
@@ -120,7 +130,11 @@ std::string utils::getDLGTempDir()
 		DLGTempDir.append(tempPath).append("\\").append(utils::DLG_ID);
 	}
 	return DLGTempDir;
+}
 
+string utils::launchExe(const std::string &exeName)
+{
+	return launchExe(exeName, "");
 }
 
 // a pipe has two ends, a read handle and a write handle
@@ -134,7 +148,7 @@ std::string utils::getDLGTempDir()
 //h_child_stdout_w
 //h_child_stdin_r
 //h_child_stdin_w
-string utils::launchExe(const std::string &exeName)
+string utils::launchExe(const string &exeName, const string &args)
 {
 	HANDLE h_child_stdout_r = NULL;
 	HANDLE h_child_stdout_w = NULL;
@@ -181,15 +195,15 @@ string utils::launchExe(const std::string &exeName)
 	siStartInfo.hStdInput = h_child_stdin_r;
 
 	DWORD processFlags = CREATE_NO_WINDOW | CREATE_UNICODE_ENVIRONMENT;
- 
+
 	// Create the child process. 
 	bSuccess = CreateProcess(
-		NULL, 
-		const_cast<wchar_t *>(utf8::widen(exeName).c_str()),            // command line
+		const_cast<wchar_t *>(utf8::widen(exeName).c_str()),		// application name
+		const_cast<wchar_t *>(utf8::widen(args).c_str()),           // command line
 		NULL,          // process security attributes 
 		NULL,          // primary thread security attributes 
 		TRUE,          // handles are inherited 
-		processFlags,             // creation flags 
+		processFlags,  // creation flags 
 		NULL,          // use parent's environment 
 		NULL,          // use parent's current directory 
 		&siStartInfo,  // STARTUPINFO pointer 
@@ -225,7 +239,7 @@ string utils::launchExe(const std::string &exeName)
 		bSuccess = ReadFile(h_child_stdout_r, buf, FLG_JSON_BUF_SIZE, &dwRead, NULL);
 		if(!bSuccess || dwRead==0)
 		{
-			throw string("failed to launch process");
+			throw string("failed to read process output");
 		}
 
 		return buf;

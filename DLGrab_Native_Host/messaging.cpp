@@ -82,7 +82,7 @@ string messaging::get_message()
 
 }
 
-void messaging::sendMessage(int type, const string &content)
+void messaging::sendMessage(const string &type, const string &content)
 {
 	Json json = Json::Parse("{}");
 	json.AddProperty("type", Json(type));
