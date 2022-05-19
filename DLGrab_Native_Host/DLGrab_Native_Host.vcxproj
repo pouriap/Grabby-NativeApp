@@ -85,6 +85,7 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="DLGrab_Native_Host.h" />
     <ClInclude Include="jsonla.h" />
     <ClInclude Include="messaging.h" />
     <ClInclude Include="stdafx.h" />
