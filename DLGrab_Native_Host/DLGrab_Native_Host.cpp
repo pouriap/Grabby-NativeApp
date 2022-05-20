@@ -207,8 +207,7 @@ void flashGot(const string &jobText)
 		commandLine.append("\"");
 		commandLine.append(jobFileName);
 		commandLine.append("\"");
-		string flashGotResponse = utils::launchExe("FlashGot.exe", commandLine);
-		messaging::sendMessage("flashgot_output", flashGotResponse);
+		utils::launchExe("FlashGot.exe", commandLine, false);
 	}
 	catch(exception &e)
 	{

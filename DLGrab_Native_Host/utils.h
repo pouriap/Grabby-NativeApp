@@ -19,8 +19,8 @@ public:
 	static std::string getNewTempFileName();
 	static bool mkdir(const std::string &dirName);
 	static std::string getDLGTempDir();
-	static std::string launchExe(const std::string &exeName);
-	static std::string launchExe(const std::string &exeName, const std::string &args);
+	static std::string launchExe(const std::string &exeName, const bool returnOutput = true);
+	static std::string launchExe(const std::string &exeName, const std::string &args, const bool returnOutput = true);
 
 private:
 	static std::string getSpecialPath(REFKNOWNFOLDERID rfid);

@@ -133,9 +133,9 @@ std::string utils::getDLGTempDir()
 	return DLGTempDir;
 }
 
-string utils::launchExe(const std::string &exeName)
+string utils::launchExe(const std::string &exeName, const bool returnOutput)
 {
-	return launchExe(exeName, "");
+	return launchExe(exeName, "", returnOutput);
 }
 
 // a pipe has two ends, a read handle and a write handle
@@ -149,7 +149,7 @@ string utils::launchExe(const std::string &exeName)
 //h_child_stdout_w
 //h_child_stdin_r
 //h_child_stdin_w
-string utils::launchExe(const string &exeName, const string &args)
+string utils::launchExe(const string &exeName, const string &args, const bool returnOutput)
 {
 	HANDLE h_child_stdout_r = NULL;
 	HANDLE h_child_stdout_w = NULL;
@@ -227,6 +227,12 @@ string utils::launchExe(const string &exeName, const string &args)
 	CloseHandle(h_child_stdout_w);
 	CloseHandle(h_child_stdin_r);
 
+	if(!returnOutput)
+	{
+		return "";
+	}
+
+	//TODO: dynamically allocate this
 	char buf[FLG_JSON_BUF_SIZE];
 	for(int i=0; i<FLG_JSON_BUF_SIZE; i++)
 	{
@@ -235,7 +241,6 @@ string utils::launchExe(const string &exeName, const string &args)
 	unsigned long dwRead = 0;
 	bSuccess = FALSE;
 
-	//TODO: throws exception when there is no output
 	bSuccess = ReadFile(h_child_stdout_r, buf, FLG_JSON_BUF_SIZE, &dwRead, NULL);
 	if(!bSuccess || dwRead==0)
 	{
