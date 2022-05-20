@@ -28,24 +28,6 @@ string messaging::get_message()
 		//it blocks until 4 bytes is read
 		int bytes_read = fread(&message_length, sizeof(char), 4, stdin);
 
-		//TODO: remove these?
-		/*
-		if(feof(stdin))
-		{
-			LOG("EOF");
-		}
-
-		if(ferror(stdin))
-		{
-			LOG("ERROR");
-		}
-
-		LOG("message len: ");
-		LOG(message_length);
-		LOG("bytes read: ");
-		LOG(bytes_read);
-		*/
-
 		if(bytes_read != 4 || message_length <=0)
 		{
 			throw dlg_exception("bad message length");
@@ -56,7 +38,6 @@ string messaging::get_message()
 		string msg = "Error reading message length: ";
 		msg.append(e.what());
 		throw fatal_exception(msg.c_str());
-		//TODO: investigate further, and if below part also needs to throw such thing
 	}
 
 	try
@@ -64,16 +45,13 @@ string messaging::get_message()
 		char* message = new char[message_length];
 		int bytes_read = fread(message, sizeof(char), message_length, stdin);
 
-		if(bytes_read != message_length)
-		{
-			LOG("read bytes: ");
-			LOG(bytes_read);
-		}
-
 		string m(message, 0, message_length);
 		delete message;
 
-		LOG(m.c_str());
+		if(bytes_read != message_length)
+		{
+			throw dlg_exception("Read bytes doesn't match message length");
+		}
 
 		return m;
 	}
@@ -101,8 +79,18 @@ void messaging::sendMessage(const ggicci::Json &msg)
 
 void messaging::sendMessageRaw(const string &content)
 {
-	const unsigned int message_length = content.length();
-	fwrite(&message_length, sizeof(char), 4, stdout);
-	fwrite(content.c_str(), sizeof(char), message_length, stdout);
-	fflush(stdout);
+	try
+	{
+		const unsigned int message_length = content.length();
+		fwrite(&message_length, sizeof(char), 4, stdout);
+		fwrite(content.c_str(), sizeof(char), message_length, stdout);
+		fflush(stdout);
+	}
+	catch(exception &e)
+	{
+		string msg = "Failed to send message: ";
+		msg.append(e.what());
+		throw dlg_exception(msg.c_str());
+	}
+
 }
