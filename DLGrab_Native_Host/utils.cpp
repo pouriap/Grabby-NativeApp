@@ -135,7 +135,8 @@ std::string utils::getDLGTempDir()
 
 string utils::launchExe(const std::string &exeName, const bool returnOutput)
 {
-	return launchExe(exeName, "", returnOutput);
+	std::vector<std::string> args;
+	return launchExe(exeName, args, returnOutput);
 }
 
 // a pipe has two ends, a read handle and a write handle
@@ -149,7 +150,7 @@ string utils::launchExe(const std::string &exeName, const bool returnOutput)
 //h_child_stdout_w
 //h_child_stdin_r
 //h_child_stdin_w
-string utils::launchExe(const string &exeName, const string &args, const bool returnOutput)
+string utils::launchExe(const string &exeName, const vector<string> &args, const bool returnOutput)
 {
 	HANDLE h_child_stdout_r = NULL;
 	HANDLE h_child_stdout_w = NULL;
@@ -197,10 +198,23 @@ string utils::launchExe(const string &exeName, const string &args, const bool re
 
 	DWORD processFlags = CREATE_NO_WINDOW | CREATE_UNICODE_ENVIRONMENT;
 
+	string cmd(exeName);
+	for(int i=0; i<args.size(); i++)
+	{
+		//if it's an empty string don't add anything to command line
+		if(args[i].length() == 0){
+			continue;
+		}
+		cmd.append(" ");
+		cmd.append("\"");
+		cmd.append(args[i]);
+		cmd.append("\"");
+	}
+
 	// Create the child process. 
 	bSuccess = CreateProcess(
 		const_cast<wchar_t *>(utf8::widen(exeName).c_str()),		// application name
-		const_cast<wchar_t *>(utf8::widen(args).c_str()),           // command line
+		const_cast<wchar_t *>(utf8::widen(cmd).c_str()),           // command line
 		NULL,          // process security attributes 
 		NULL,          // primary thread security attributes 
 		TRUE,          // handles are inherited 
@@ -234,7 +248,6 @@ string utils::launchExe(const string &exeName, const string &args, const bool re
 		return "";
 	}
 
-	//TODO: dynamically allocate this
 	const int BUFSIZE = 1024;
 	char buf[BUFSIZE];
 	unsigned long bytesRead = 0;
@@ -254,9 +267,6 @@ string utils::launchExe(const string &exeName, const string &args, const bool re
 		res.insert(res.end(), buf, buf+bytesRead);
 		totalRead += bytesRead;
 	}
-
-	//null terminate it
-	//res.push_back('\0');
 
 	if(totalRead<=0)
 	{

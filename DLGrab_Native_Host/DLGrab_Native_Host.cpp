@@ -22,6 +22,8 @@ int main(int argc, char *argv[])
 {
 	string DLGTmpDir;
 
+	utils::launchExe("c:\\users\\cpp\\desktop\\flashgot.exe");
+
 	//initializations
 	try{
 		setupStdin();
@@ -203,11 +205,10 @@ void flashGot(const string &jobText)
 		std::ofstream jobFile(jobFileName);
 		jobFile << jobText;
 		jobFile.close();
-		string commandLine = "FlashGot.exe ";
-		commandLine.append("\"");
-		commandLine.append(jobFileName);
-		commandLine.append("\"");
-		utils::launchExe("FlashGot.exe", commandLine, false);
+
+		vector<string> args;
+		args.push_back(jobFileName);
+		utils::launchExe("FlashGot.exe", args, false);
 	}
 	catch(exception &e)
 	{
