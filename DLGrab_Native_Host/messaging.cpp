@@ -2,6 +2,7 @@
 #include "messaging.h"
 #include <string>
 #include "utils.h"
+#include "exceptions.h"
 
 #define LOG(x) utils::log(x)
 
@@ -11,7 +12,6 @@ using namespace ggicci;
 messaging::messaging(void)
 {
 }
-
 
 messaging::~messaging(void)
 {
@@ -48,11 +48,14 @@ string messaging::get_message()
 
 		if(bytes_read != 4 || message_length <=0)
 		{
-			throw "bad message length";
+			throw dlg_exception("bad message length");
 		}
 	}
-	catch(...){
-		throw std::length_error("bad message length");
+	catch(exception &e)
+	{
+		string msg = "Error reading message length: ";
+		msg.append(e.what());
+		throw fatal_exception(msg.c_str());
 		//TODO: investigate further, and if below part also needs to throw such thing
 	}
 
@@ -76,13 +79,9 @@ string messaging::get_message()
 	}
 	catch(exception &e)
 	{
-		string msg = "error reading raw message\n";
+		string msg = "Error reading raw message: ";
 		msg.append(e.what());
-		throw msg;
-	}
-	catch(...)
-	{
-		throw "unexpected error when reading raw message";
+		throw dlg_exception(msg.c_str());
 	}
 
 }

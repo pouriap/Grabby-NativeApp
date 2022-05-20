@@ -11,6 +11,7 @@
 #include "DLGrab_Native_Host.h"
 #include "utils.h"
 #include "messaging.h"
+#include "exceptions.h"
 
 #define LOG(x) utils::log(x)
 
@@ -26,16 +27,12 @@ int main(int argc, char *argv[])
 		setupStdin();
 		setupTmpDir();
 	}
-	catch(string exp_msg)
+	catch(exception &e)
 	{
-		messaging::sendMessage("flashgot_output", exp_msg);
-		LOG(exp_msg.c_str());
-		exit(EXIT_FAILURE);
-	}
-	catch(...)
-	{
-		messaging::sendMessage("flashgot_output", "an unknown exception occured");
-		LOG("an unknown exception occured");
+		try{
+			messaging::sendMessage("flashgot_output", e.what());
+			LOG(e.what());
+		}catch(...){}
 		exit(EXIT_FAILURE);
 	}
 
@@ -48,22 +45,21 @@ int main(int argc, char *argv[])
 			Json &msg = utils::parseJSON(raw_message);
 			processMessage(msg);
 		}
-		catch(string &exp_msg)
+		catch(fatal_exception &e)
 		{
-			messaging::sendMessage("flashgot_output", exp_msg);
-			LOG(exp_msg.c_str());
-		}
-		catch(std::length_error &e)
-		{
-			messaging::sendMessage("flashgot_output", e.what());
-			LOG(e.what());
-			//we exit after a length error because otherwise we'll end up in a loop
+			try{
+				messaging::sendMessage("flashgot_output", e.what());
+				LOG(e.what());
+			}catch(...){}
+			//we exit after a fatal exception because otherwise the infinite loop will run rapidly
 			exit(EXIT_FAILURE);
 		}
-		catch(...)
+		catch(exception &e)
 		{
-			messaging::sendMessage("flashgot_output", "an unknown exception occured");
-			LOG("an unknown exception occured");
+			try{
+				messaging::sendMessage("flashgot_output", e.what());
+				LOG(e.what());
+			}catch(...){}
 		}
     }
 }
@@ -73,17 +69,23 @@ void setupStdin()
 {
 	int result = _setmode( _fileno( stdin ), _O_BINARY );
 	if( result == -1 ){
-		LOG("cannot set stdin mode to binary");
-		exit(EXIT_FAILURE);
+		throw fatal_exception("cannot set stdin mode to binary");
 	}
 }
 
 //sets up our temp directory where we put files
 string setupTmpDir()
 {
-	string DLGTempDir = utils::getDLGTempDir();
-	utils::mkdir(DLGTempDir);
-	return DLGTempDir;
+	try
+	{
+		string DLGTempDir = utils::getDLGTempDir();
+		utils::mkdir(DLGTempDir);
+		return DLGTempDir;
+	}
+	catch(...)
+	{
+		throw fatal_exception("cannot setup temp directory");
+	}
 }
 
 //using the reference of the Json object because pass by value caused exception because of copy constructor error
@@ -105,21 +107,11 @@ void processMessage(const Json &msg)
 			handleType3(msg);
 		}
 	}
-	//if it's one of my own thrown exceptions throw it higher
-	catch(string &s)
-	{
-		throw s;
-	}
 	catch(exception &e)
 	{
-		string msg = "error parsing JSON: ";
+		string msg = "Error in processing message: ";
 		msg.append(e.what());
-		throw string(msg);
-	}
-	//otherwise throw this
-	catch(...)
-	{
-		throw string("unexpected error occured");
+		throw dlg_exception(msg.c_str());
 	}
 }
 
@@ -218,14 +210,10 @@ void flashGot(const string &jobText)
 		string flashGotResponse = utils::launchExe("FlashGot.exe", commandLine);
 		messaging::sendMessage("flashgot_output", flashGotResponse);
 	}
-	catch(string &e)
+	catch(exception &e)
 	{
-		string msg = "creating job file failed: ";
-		msg.append(e);
-		throw msg;
-	}
-	catch(...)
-	{
-		throw "unexpected error when creating job file";
+		string msg = "Executing FlashGot failed: ";
+		msg.append(e.what());
+		throw dlg_exception(msg.c_str());
 	}
 }

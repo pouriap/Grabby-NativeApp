@@ -4,6 +4,7 @@
 #include "utf8.h"
 #include "fileapi.h"
 #include <ctime>
+#include "exceptions.h"
 
 #define LOG(x) utils::log(x)
 #define FLG_JSON_BUF_SIZE 4000
@@ -48,7 +49,7 @@ string utils::getSpecialPath(REFKNOWNFOLDERID rfid)
 	PWSTR path;
 	if(SHGetKnownFolderPath(rfid, 0, NULL, &path) != S_OK)
 	{
-		throw "failed to get special path";
+		throw dlg_exception("failed to get special path");
 	}
 
 	string stPath = utf8::narrow(path);
@@ -65,9 +66,9 @@ Json utils::parseJSON(const string &JSONstr)
 	}
 	catch (exception& e)
 	{
-		string msg = "error parsing json\n";
+		string msg = "Error parsing JSON: ";
 		msg.append(e.what());
-		throw msg;
+		throw dlg_exception(msg.c_str());
 	}
 }
 
@@ -106,7 +107,7 @@ bool utils::mkdir(const string &dirName)
 		return true;
 	}
 
-	throw "failed to create temp directory";
+	throw dlg_exception("failed to create temp directory");
 }
 
 bool utils::dirExists(const std::string& dirName_in)
@@ -150,6 +151,8 @@ string utils::launchExe(const std::string &exeName)
 //h_child_stdin_w
 string utils::launchExe(const string &exeName, const string &args)
 {
+	//TODO: clean this mess
+
 	HANDLE h_child_stdout_r = NULL;
 	HANDLE h_child_stdout_w = NULL;
 	HANDLE h_child_stdin_r = NULL;
@@ -212,8 +215,7 @@ string utils::launchExe(const string &exeName, const string &args)
 	// If an error occurs, exit the application. 
 	if ( ! bSuccess ) 
 	{
-		LOG("create process failed");
-		throw string("create process failed");
+		throw dlg_exception("Create process failed");
 	}
 	else 
 	{
@@ -240,7 +242,7 @@ string utils::launchExe(const string &exeName, const string &args)
 		bSuccess = ReadFile(h_child_stdout_r, buf, FLG_JSON_BUF_SIZE, &dwRead, NULL);
 		if(!bSuccess || dwRead==0)
 		{
-			throw string("failed to read process output");
+			throw dlg_exception("Failed to read process output");
 		}
 
 		return buf;
