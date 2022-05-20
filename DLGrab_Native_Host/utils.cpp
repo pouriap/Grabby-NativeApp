@@ -151,14 +151,13 @@ string utils::launchExe(const std::string &exeName)
 //h_child_stdin_w
 string utils::launchExe(const string &exeName, const string &args)
 {
-	//TODO: clean this mess
-
 	HANDLE h_child_stdout_r = NULL;
 	HANDLE h_child_stdout_w = NULL;
 	HANDLE h_child_stdin_r = NULL;
 	HANDLE h_child_stdin_w = NULL;
 
 	SECURITY_ATTRIBUTES saAttr; 
+	BOOL bSuccess = TRUE; 
  
 	// Set the bInheritHandle flag so pipe handles are inherited. 
 	saAttr.nLength = sizeof(SECURITY_ATTRIBUTES); 
@@ -166,25 +165,24 @@ string utils::launchExe(const string &exeName, const string &args)
 	saAttr.lpSecurityDescriptor = NULL; 
 
 	// Create a pipe for the child process's STDOUT. 
-	if ( ! CreatePipe(&h_child_stdout_r, &h_child_stdout_w, &saAttr, 0) ) 
-		LOG("StdoutRd CreatePipe"); 
+	bSuccess &= CreatePipe(&h_child_stdout_r, &h_child_stdout_w, &saAttr, 0);
 
 	// Ensure the read handle to the pipe for STDOUT is not inherited.
-	if ( ! SetHandleInformation(h_child_stdout_r, HANDLE_FLAG_INHERIT, 0) )
-		LOG("Stdout SetHandleInformation"); 
+	bSuccess &= SetHandleInformation(h_child_stdout_r, HANDLE_FLAG_INHERIT, 0);
 
 	// Create a pipe for the child process's STDIN. 
-	if (! CreatePipe(&h_child_stdin_r, &h_child_stdin_w, &saAttr, 0)) 
-		LOG("Stdin CreatePipe"); 
+	bSuccess &= CreatePipe(&h_child_stdin_r, &h_child_stdin_w, &saAttr, 0);
 
 	// Ensure the write handle to the pipe for STDIN is not inherited. 
-	if ( ! SetHandleInformation(h_child_stdin_w, HANDLE_FLAG_INHERIT, 0) )
-		LOG("Stdin SetHandleInformation");
+	bSuccess &= SetHandleInformation(h_child_stdin_w, HANDLE_FLAG_INHERIT, 0);
 
+	if(!bSuccess)
+	{
+		throw dlg_exception("Failed to create child process handles");
+	}
 
 	PROCESS_INFORMATION piProcInfo; 
 	STARTUPINFO siStartInfo;
-	BOOL bSuccess = FALSE; 
   
 	ZeroMemory( &piProcInfo, sizeof(PROCESS_INFORMATION) );
 	ZeroMemory( &siStartInfo, sizeof(STARTUPINFO) );
@@ -213,40 +211,37 @@ string utils::launchExe(const string &exeName, const string &args)
 		&piProcInfo);  // receives PROCESS_INFORMATION 
    
 	// If an error occurs, exit the application. 
-	if ( ! bSuccess ) 
+	if (!bSuccess) 
 	{
 		throw dlg_exception("Create process failed");
 	}
-	else 
-	{
-		// Close handles to the child process and its primary thread.
-		// Some applications might keep these handles to monitor the status
-		// of the child process, for example. 
-		CloseHandle(piProcInfo.hProcess);
-		CloseHandle(piProcInfo.hThread);
+
+	// Close handles to the child process and its primary thread.
+	// Some applications might keep these handles to monitor the status
+	// of the child process, for example. 
+	CloseHandle(piProcInfo.hProcess);
+	CloseHandle(piProcInfo.hThread);
       
-		// Close handles to the stdin and stdout pipes no longer needed by the child process.
-		// If they are not explicitly closed, there is no way to recognize that the child process has ended.
-		CloseHandle(h_child_stdout_w);
-		CloseHandle(h_child_stdin_r);
+	// Close handles to the stdin and stdout pipes no longer needed by the child process.
+	// If they are not explicitly closed, there is no way to recognize that the child process has ended.
+	CloseHandle(h_child_stdout_w);
+	CloseHandle(h_child_stdin_r);
 
-		char buf[FLG_JSON_BUF_SIZE];
-		for(int i=0; i<FLG_JSON_BUF_SIZE; i++)
-		{
-			buf[i] = '\0';
-		}
-		unsigned long dwRead = 0;
-		bSuccess = FALSE;
-
-		//TODO: throws exception when there is no output
-		bSuccess = ReadFile(h_child_stdout_r, buf, FLG_JSON_BUF_SIZE, &dwRead, NULL);
-		if(!bSuccess || dwRead==0)
-		{
-			throw dlg_exception("Failed to read process output");
-		}
-
-		return buf;
-
+	char buf[FLG_JSON_BUF_SIZE];
+	for(int i=0; i<FLG_JSON_BUF_SIZE; i++)
+	{
+		buf[i] = '\0';
 	}
+	unsigned long dwRead = 0;
+	bSuccess = FALSE;
+
+	//TODO: throws exception when there is no output
+	bSuccess = ReadFile(h_child_stdout_r, buf, FLG_JSON_BUF_SIZE, &dwRead, NULL);
+	if(!bSuccess || dwRead==0)
+	{
+		throw dlg_exception("Failed to read process output");
+	}
+
+	return buf;
 
 }

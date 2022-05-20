@@ -212,7 +212,7 @@ void flashGot(const string &jobText)
 	}
 	catch(exception &e)
 	{
-		string msg = "Executing FlashGot failed: ";
+		string msg = "Error in FlashGot execution: ";
 		msg.append(e.what());
 		throw dlg_exception(msg.c_str());
 	}

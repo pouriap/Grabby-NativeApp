@@ -8,7 +8,7 @@ class fatal_exception : public std::exception
     public:
     fatal_exception(const char* msg);
 	~fatal_exception(void);
-    const char* what();
+    const char* what() const throw();
 };
 
 class dlg_exception : public std::exception
@@ -19,5 +19,5 @@ class dlg_exception : public std::exception
     public:
     dlg_exception(const char * msg);
 	~dlg_exception(void);
-    const char* what();
+    const char* what() const throw();
 };
