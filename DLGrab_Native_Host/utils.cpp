@@ -213,7 +213,9 @@ string utils::launchExe(const string &exeName, const string &args, const bool re
 	// If an error occurs, exit the application. 
 	if (!bSuccess) 
 	{
-		throw dlg_exception("Create process failed");
+		string msg = "Create process failed with error code ";
+		msg.append( std::to_string(GetLastError()) );
+		throw dlg_exception(msg.c_str());
 	}
 
 	// Close handles to the child process and its primary thread.
@@ -233,20 +235,34 @@ string utils::launchExe(const string &exeName, const string &args, const bool re
 	}
 
 	//TODO: dynamically allocate this
-	char buf[FLG_JSON_BUF_SIZE];
-	for(int i=0; i<FLG_JSON_BUF_SIZE; i++)
-	{
-		buf[i] = '\0';
-	}
-	unsigned long dwRead = 0;
+	const int BUFSIZE = 1024;
+	char buf[BUFSIZE];
+	unsigned long bytesRead = 0;
+	unsigned long totalRead = 0;
 	bSuccess = FALSE;
 
-	bSuccess = ReadFile(h_child_stdout_r, buf, FLG_JSON_BUF_SIZE, &dwRead, NULL);
-	if(!bSuccess || dwRead==0)
+	std::vector<char> res;
+	res.reserve(BUFSIZE);
+
+	while(true)
+	{
+		bSuccess = ReadFile(h_child_stdout_r, buf, BUFSIZE, &bytesRead, NULL);
+		if(!bSuccess || bytesRead<=0)
+		{
+			break;
+		}
+		res.insert(res.end(), buf, buf+bytesRead);
+		totalRead += bytesRead;
+	}
+
+	//null terminate it
+	//res.push_back('\0');
+
+	if(totalRead<=0)
 	{
 		throw dlg_exception("Failed to read process output");
 	}
 
-	return buf;
+	return string(res.begin(), res.end());
 
 }
