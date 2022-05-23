@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "messaging.h"
 #include <string>
+#include <mutex>
 #include "utils.h"
 #include "exceptions.h"
 
@@ -79,6 +80,9 @@ void messaging::sendMessage(const ggicci::Json &msg)
 
 void messaging::sendMessageRaw(const string &content)
 {
+	static std::mutex mutex;
+	std::lock_guard<std::mutex> lock(mutex);
+
 	try
 	{
 		const unsigned int message_length = content.length();

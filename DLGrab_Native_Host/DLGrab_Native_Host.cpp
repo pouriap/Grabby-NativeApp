@@ -20,10 +20,6 @@ using namespace ggicci;
 
 int main(int argc, char *argv[])
 {
-	string DLGTmpDir;
-
-	utils::launchExe("c:\\users\\cpp\\desktop\\flashgot.exe");
-
 	//initializations
 	try{
 		setupStdin();
