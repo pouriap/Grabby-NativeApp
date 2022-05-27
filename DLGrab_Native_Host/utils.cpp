@@ -21,10 +21,14 @@ utils::~utils(void)
 
 void utils::log(const char* msg)
 {
-    ofstream logFile;
-    logFile.open("log.txt", std::ios_base::app);
-	logFile << msg << endl;
-	logFile.close();
+	static bool init = false;
+
+	if(!init){
+		plog::init(plog::debug, "log.txt", 1000*1000, 2);
+		init = true;
+	}
+
+	PLOG_DEBUG << msg;
 }
 
 void utils::log(unsigned int msg)

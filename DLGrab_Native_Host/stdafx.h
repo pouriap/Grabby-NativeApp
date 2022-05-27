@@ -14,3 +14,5 @@
 
 // TODO: reference additional headers your program requires here
 #include "jsonla.h"
+#include <plog/Log.h>
+#include <plog/Initializers/RollingFileInitializer.h>
