@@ -20,3 +20,4 @@ void ytdl_info(const string &url);
 void ytdl_video(const string &url, const string &formatID);
 void ytdl_audio(const string &url);
 void ytdl(const string &url, const char* type, vector<string> args);
+void handleDlProgress(string output);

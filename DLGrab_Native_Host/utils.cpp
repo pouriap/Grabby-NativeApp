@@ -125,7 +125,8 @@ string utils::launchExe(const std::string &exeName, const bool returnOutput)
 //h_child_stdout_w
 //h_child_stdin_r
 //h_child_stdin_w
-string utils::launchExe(const string &exeName, const vector<string> &args, const bool returnOutput)
+string utils::launchExe( const std::string &exeName, const std::vector<std::string> &args, 
+						const bool returnOutput, void (*onOutput)(string output) )
 {
 	HANDLE h_child_stdout_r = NULL;
 	HANDLE h_child_stdout_w = NULL;
@@ -228,18 +229,25 @@ string utils::launchExe(const string &exeName, const vector<string> &args, const
 	unsigned long bytesRead = 0;
 	unsigned long totalRead = 0;
 	bSuccess = FALSE;
-	std::vector<char> res;
+	std::vector<char> output;
 
 	while(true)
 	{
-		res.reserve(BUFSIZE);
+		output.reserve(BUFSIZE);
 		bSuccess = ReadFile(h_child_stdout_r, buf, BUFSIZE, &bytesRead, NULL);
 		if(!bSuccess || bytesRead<=0)
 		{
 			break;
 		}
-		res.insert(res.end(), buf, buf+bytesRead);
+		output.insert(output.end(), buf, buf+bytesRead);
 		totalRead += bytesRead;
+		//pass output to callback function
+		//ReadFile returns when it reaches a carriage return
+		if(onOutput != NULL)
+		{
+			string outStr(buf, buf+bytesRead);
+			onOutput(outStr);
+		}
 	}
 
 	if(totalRead<=0)
@@ -247,7 +255,7 @@ string utils::launchExe(const string &exeName, const vector<string> &args, const
 		throw dlg_exception("Failed to read process output");
 	}
 
-	return string(res.begin(), res.end());
+	return string(output.begin(), output.end());
 
 }
 

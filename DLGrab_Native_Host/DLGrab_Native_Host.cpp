@@ -282,9 +282,7 @@ void ytdl(const string &url, const char* type, vector<string> args)
 	try
 	{
 		args.push_back(url);
-		string ytdlOutput = utils::launchExe("ytdl.exe", args);
-		utils::strReplaceAll(ytdlOutput, "\r", "\\r");
-		utils::strReplaceAll(ytdlOutput, "\n", "\\n");
+		string ytdlOutput = utils::launchExe("ytdl.exe", args, handleDlProgress);
 		messaging::sendMessage(type, ytdlOutput);
 	}
 	catch(exception &e){
@@ -293,4 +291,9 @@ void ytdl(const string &url, const char* type, vector<string> args)
 			PLOG_ERROR << e.what();
 		}catch(...){}
 	}
+}
+
+void handleDlProgress(string output)
+{
+	messaging::sendMessage(MSGTYP_HDLPROG, output);
 }
