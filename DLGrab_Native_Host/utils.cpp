@@ -19,23 +19,6 @@ utils::~utils(void)
 {
 }
 
-void utils::log(const char* msg)
-{
-	static bool init = false;
-
-	if(!init){
-		plog::init(plog::debug, "log.txt", 1000*1000, 2);
-		init = true;
-	}
-
-	PLOG_DEBUG << msg;
-}
-
-void utils::log(unsigned int msg)
-{
-	log(std::to_string(msg).c_str());
-}
-
 string utils::getSpecialPath(REFKNOWNFOLDERID rfid)
 {
 	PWSTR path;

@@ -23,6 +23,7 @@ int main(int argc, char *argv[])
 {
 	//initializations
 	try{
+		plog::init(plog::debug, "log.txt", 1000*1000, 2);
 		setupStdin();
 		setupTmpDir();
 	}
@@ -30,10 +31,12 @@ int main(int argc, char *argv[])
 	{
 		try{
 			messaging::sendMessage(MSGTYP_HERR, e.what());
-			LOG(e.what());
+			PLOG_FATAL << e.what();
 		}catch(...){}
 		exit(EXIT_FAILURE);
 	}
+
+	PLOG_INFO << "starting native host";
 
 	//the loop for sending/receiving messages
     while(true)
@@ -48,7 +51,7 @@ int main(int argc, char *argv[])
 		{
 			try{
 				messaging::sendMessage(MSGTYP_HERR, e.what());
-				LOG(e.what());
+				PLOG_FATAL << e.what();
 			}catch(...){}
 			//we exit after a fatal exception because otherwise the infinite loop will run rapidly
 			exit(EXIT_FAILURE);
@@ -57,7 +60,7 @@ int main(int argc, char *argv[])
 		{
 			try{
 				messaging::sendMessage(MSGTYP_HERR, e.what());
-				LOG(e.what());
+				PLOG_ERROR << e.what();
 			}catch(...){}
 		}
     }
@@ -242,7 +245,7 @@ void ytdl(const string url)
 	catch(exception &e){
 		try{
 			messaging::sendMessage(MSGTYP_HERR, e.what());
-			LOG(e.what());
+			PLOG_ERROR << e.what();
 		}catch(...){}
 	}
 }

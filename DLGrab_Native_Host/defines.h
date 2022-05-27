@@ -1,7 +1,6 @@
 #pragma once
 
 //functions
-#define LOG(x) utils::log(x)
 
 //ints
 #define FLG_JSON_BUF_SIZE 4000

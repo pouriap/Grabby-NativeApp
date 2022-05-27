@@ -61,9 +61,7 @@
     <PostBuildEvent>
       <Command>copy "$(TargetPath)" "c:\users\cpp\desktop\$(TargetFileName)"</Command>
     </PostBuildEvent>
-    <PreBuildEvent>
-      <Command>del "c:\users\cpp\desktop\log.txt"</Command>
-    </PreBuildEvent>
+    <PreBuildEvent />
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>

@@ -10,8 +10,6 @@ class utils
 public:
 	utils(void);
 	~utils(void);
-	static void log(const char* msg);
-	static void log(unsigned int msg);
 	static ggicci::Json parseJSON(const std::string &JSONstr);
 	static std::string getNewTempFileName();
 	static bool mkdir(const std::string &dirName);
