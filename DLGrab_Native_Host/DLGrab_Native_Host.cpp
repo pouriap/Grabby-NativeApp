@@ -1,6 +1,8 @@
 //TODO: make stdout binary in flashgot nativehost
 //TODO: make flashgot nativehost message lenght logic like this one
-//TODO: add proper log
+//TODO: make sure everything is x86
+//TODO: check licence of programs for redistribution
+//TODO: vc++ 2015 is needed for yt-dlp(x86)
 
 #include "stdafx.h"
 #include <iostream>
@@ -109,9 +111,13 @@ void processMessage(const Json &msg)
 		{
 			handleType3(msg);
 		}
-		else if(type == MSGTYP_YTDL)
+		else if(type == MSGTYP_YTDL_INFO)
 		{
 			handleType4(msg);
+		}
+		else
+		{
+			messaging::sendMessage(MSGTYP_UNSUPP, "Unsupported message type");
 		}
 	}
 	catch(exception &e)
@@ -204,7 +210,7 @@ void handleType3(const Json &msg)
 void handleType4(const Json &msg)
 {
 	string url = msg["url"].AsString();
-	std::thread th1(ytdl, url);
+	std::thread th1(ytdl_info, url);
 	th1.detach();
 }
 
@@ -230,14 +236,27 @@ void flashGot(const string &jobText)
 	}
 }
 
-//TODO: check if launchExe is thread safe
-//TODO: make log() thread safe
-void ytdl(const string url)
+void ytdl_info(const string &url)
+{
+	vector<string> args;
+	args.push_back("-j");
+	ytdl(url, MSGTYP_HYTDLINFO, args);
+}
+
+void ytdl_dl_video(const string &url, const string &formatID)
+{
+
+}
+
+void ytdl_dl_audio(const string &url)
+{
+
+}
+
+void ytdl(const string &url, const char* type, vector<string> args)
 {
 	try
 	{
-		vector<string> args;
-		args.push_back("-j");
 		args.push_back(url);
 		string ytdlJSON = utils::launchExe("ytdl.exe", args);
 		messaging::sendMessageRaw(ytdlJSON);
