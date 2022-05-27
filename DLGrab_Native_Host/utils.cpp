@@ -10,10 +10,7 @@
 using namespace std;
 using namespace ggicci;
 
-//static fields
-const string utils::DLG_ID = "download.grab.pouriap";
 
-//static members
 utils::utils(void)
 {
 }
@@ -24,22 +21,15 @@ utils::~utils(void)
 
 void utils::log(const char* msg)
 {
-	string filename = utils::getSpecialPath(FOLDERID_Desktop);
-	filename.append("\\log.txt");
     ofstream logFile;
-    logFile.open(filename, std::ios_base::app);
+    logFile.open("log.txt", std::ios_base::app);
 	logFile << msg << endl;
 	logFile.close();
 }
 
 void utils::log(unsigned int msg)
 {
-	string filename = utils::getSpecialPath(FOLDERID_Desktop);
-	filename.append("\\log.txt");
-    ofstream logFile;
-    logFile.open(filename, std::ios_base::app);
-	logFile << msg << endl;
-	logFile.close();
+	log(std::to_string(msg).c_str());
 }
 
 string utils::getSpecialPath(REFKNOWNFOLDERID rfid)
@@ -126,7 +116,7 @@ std::string utils::getDLGTempDir()
 	if(DLGTempDir.length() == 0)
 	{
 		string tempPath = utils::getTempPath();
-		DLGTempDir.append(tempPath).append("\\").append(utils::DLG_ID);
+		DLGTempDir.append(tempPath).append("\\").append(DLG_ADDON_ID);
 	}
 	return DLGTempDir;
 }

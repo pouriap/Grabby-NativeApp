@@ -8,9 +8,6 @@ class utils
 {
 
 public:
-	//variables
-	static const std::string DLG_ID;
-	//functions
 	utils(void);
 	~utils(void);
 	static void log(const char* msg);
