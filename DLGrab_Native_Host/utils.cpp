@@ -250,3 +250,13 @@ string utils::launchExe(const string &exeName, const vector<string> &args, const
 	return string(res.begin(), res.end());
 
 }
+
+void utils::strReplaceAll(std::string &data, const std::string &toSearch, const std::string &replaceStr)
+{
+	size_t pos = data.find(toSearch);
+	while(pos != std::string::npos)
+	{
+		data.replace(pos, toSearch.size(), replaceStr);
+		pos =data.find(toSearch, pos + replaceStr.size());
+	}
+}

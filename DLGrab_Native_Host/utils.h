@@ -16,6 +16,8 @@ public:
 	static std::string getDLGTempDir();
 	static std::string launchExe(const std::string &exeName, const bool returnOutput = true);
 	static std::string launchExe(const std::string &exeName, const std::vector<std::string> &args, const bool returnOutput = true);
+	static void strReplaceAll(std::string &data, const std::string &toSearch, const std::string &replaceStr);
+
 
 private:
 	static std::string getSpecialPath(REFKNOWNFOLDERID rfid);

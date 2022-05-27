@@ -85,6 +85,8 @@ void messaging::sendMessageRaw(const string &content)
 {
 	std::lock_guard<std::mutex> lock(theMutex);
 
+	PLOG_INFO << "sending: " << content;
+
 	try
 	{
 		const unsigned int message_length = content.length();

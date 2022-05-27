@@ -115,6 +115,14 @@ void processMessage(const Json &msg)
 		{
 			handleType4(msg);
 		}
+		else if(type == MSGTYP_YTDL_VID)
+		{
+			handleType5(msg);
+		}
+		else if(type == MSGTYP_YTDL_AUD)
+		{
+			handleType6(msg);
+		}
 		else
 		{
 			messaging::sendMessage(MSGTYP_UNSUPP, "Unsupported message type");
@@ -214,6 +222,19 @@ void handleType4(const Json &msg)
 	th1.detach();
 }
 
+void handleType5(const Json &msg)
+{
+	string url = msg["url"].AsString();
+	string formatID = msg["format_id"].AsString();
+	std::thread th1(ytdl_video, url, formatID);
+	th1.detach();
+}
+
+void handleType6(const Json &msg)
+{
+
+}
+
 //launches FlashGot to perform a download with a DM
 void flashGot(const string &jobText)
 {
@@ -243,12 +264,15 @@ void ytdl_info(const string &url)
 	ytdl(url, MSGTYP_HYTDLINFO, args);
 }
 
-void ytdl_dl_video(const string &url, const string &formatID)
+void ytdl_video(const string &url, const string &formatID)
 {
-
+	vector<string> args;
+	args.push_back("-f");
+	args.push_back(formatID);
+	ytdl(url, MSGTYP_HDLPROG, args);
 }
 
-void ytdl_dl_audio(const string &url)
+void ytdl_audio(const string &url)
 {
 
 }
@@ -258,8 +282,10 @@ void ytdl(const string &url, const char* type, vector<string> args)
 	try
 	{
 		args.push_back(url);
-		string ytdlJSON = utils::launchExe("ytdl.exe", args);
-		messaging::sendMessageRaw(ytdlJSON);
+		string ytdlOutput = utils::launchExe("ytdl.exe", args);
+		utils::strReplaceAll(ytdlOutput, "\r", "\\r");
+		utils::strReplaceAll(ytdlOutput, "\n", "\\n");
+		messaging::sendMessage(type, ytdlOutput);
 	}
 	catch(exception &e){
 		try{

@@ -12,4 +12,5 @@
 #define MSGTYP_HERR "host_error"
 #define MSGTYP_HMSG "host_message"
 #define MSGTYP_HYTDLINFO "host_ytdl_info"
+#define MSGTYP_HDLPROG "host_download_progress"
 #define MSGTYP_UNSUPP "unsupported"
