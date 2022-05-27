@@ -81,9 +81,12 @@ void messaging::sendMessage(const ggicci::Json &msg)
 	sendMessageRaw(msg.ToString());
 }
 
-void messaging::sendMessageRaw(const string &content)
+void messaging::sendMessageRaw(string content)
 {
 	std::lock_guard<std::mutex> lock(theMutex);
+
+	utils::strReplaceAll(content, "\r", "\\r");
+	utils::strReplaceAll(content, "\n", "\\n");
 
 	PLOG_INFO << "sending: " << content;
 
