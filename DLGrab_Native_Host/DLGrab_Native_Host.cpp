@@ -13,8 +13,7 @@
 #include "utils.h"
 #include "messaging.h"
 #include "exceptions.h"
-
-#define LOG(x) utils::log(x)
+#include "defines.h"
 
 using namespace std;
 using namespace ggicci;
@@ -95,19 +94,19 @@ void processMessage(const Json &msg)
 	try
 	{
 		string type = msg["type"].AsString();
-		if(type == "native_client_available")
+		if(type == MSGTYP_HOST_AVAIL)
 		{
 			handleType1(msg);
 		}
-		else if(type == "get_available_dms")
+		else if(type == MSGTYP_GET_AVAIL_DMS)
 		{
 			handleType2(msg);
 		}
-		else if(type == "download")
+		else if(type == MSGTYP_DOWNLOAD)
 		{
 			handleType3(msg);
 		}
-		else if(type == "ytdl")
+		else if(type == MSGTYP_YTDL)
 		{
 			handleType4(msg);
 		}

@@ -4,8 +4,7 @@
 #include <mutex>
 #include "utils.h"
 #include "exceptions.h"
-
-#define LOG(x) utils::log(x)
+#include "defines.h"
 
 using namespace std;
 using namespace ggicci;

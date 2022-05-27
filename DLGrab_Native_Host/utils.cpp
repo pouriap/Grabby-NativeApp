@@ -5,9 +5,7 @@
 #include "fileapi.h"
 #include <ctime>
 #include "exceptions.h"
-
-#define LOG(x) utils::log(x)
-#define FLG_JSON_BUF_SIZE 4000
+#include "defines.h"
 
 using namespace std;
 using namespace ggicci;
