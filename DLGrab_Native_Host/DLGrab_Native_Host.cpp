@@ -8,6 +8,7 @@
 #include <fstream>
 #include <fcntl.h>
 #include <io.h>
+#include <thread>
 #include "DLGrab_Native_Host.h"
 #include "utils.h"
 #include "messaging.h"
@@ -17,6 +18,7 @@
 
 using namespace std;
 using namespace ggicci;
+
 
 int main(int argc, char *argv[])
 {
@@ -65,8 +67,9 @@ int main(int argc, char *argv[])
 //sets stdin to binary mode
 void setupStdin()
 {
-	int result = _setmode( _fileno( stdin ), _O_BINARY );
-	if( result == -1 ){
+	int res1 = _setmode( _fileno( stdin ), _O_BINARY );
+	int res2 = _setmode( _fileno( stdout ), _O_BINARY );
+	if( res1 == -1 || res2 == -1){
 		throw fatal_exception("cannot set stdin mode to binary");
 	}
 }
@@ -103,6 +106,10 @@ void processMessage(const Json &msg)
 		else if(type == "download")
 		{
 			handleType3(msg);
+		}
+		else if(type == "ytdl")
+		{
+			handleType4(msg);
 		}
 	}
 	catch(exception &e)
@@ -192,6 +199,14 @@ void handleType3(const Json &msg)
 	flashGot(jobText);
 }
 
+void handleType4(const Json &msg)
+{
+	string url = msg["url"].AsString();
+	std::thread th1(ytdl, url);
+	th1.detach();
+	messaging::sendMessage("flashgot_output", "thread started");
+}
+
 //launches FlashGot to perform a download with a DM
 void flashGot(const string &jobText)
 {
@@ -211,5 +226,25 @@ void flashGot(const string &jobText)
 		string msg = "Error in FlashGot execution: ";
 		msg.append(e.what());
 		throw dlg_exception(msg.c_str());
+	}
+}
+
+//TODO: check if launchExe is thread safe
+//TODO: make log() thread safe
+void ytdl(const string url)
+{
+	try
+	{
+		vector<string> args;
+		args.push_back("-j");
+		args.push_back(url);
+		string ytdlJSON = utils::launchExe("ytdl.exe", args);
+		messaging::sendMessageRaw(ytdlJSON);
+	}
+	catch(exception &e){
+		try{
+			messaging::sendMessage("error", e.what());
+			LOG(e.what());
+		}catch(...){}
 	}
 }

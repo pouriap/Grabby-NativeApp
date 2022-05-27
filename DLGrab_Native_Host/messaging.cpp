@@ -10,6 +10,10 @@
 using namespace std;
 using namespace ggicci;
 
+
+std::mutex theMutex;
+
+
 messaging::messaging(void)
 {
 }
@@ -80,8 +84,7 @@ void messaging::sendMessage(const ggicci::Json &msg)
 
 void messaging::sendMessageRaw(const string &content)
 {
-	static std::mutex mutex;
-	std::lock_guard<std::mutex> lock(mutex);
+	std::lock_guard<std::mutex> lock(theMutex);
 
 	try
 	{
