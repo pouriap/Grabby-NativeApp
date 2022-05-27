@@ -29,7 +29,7 @@ int main(int argc, char *argv[])
 	catch(exception &e)
 	{
 		try{
-			messaging::sendMessage("flashgot_output", e.what());
+			messaging::sendMessage(MSGTYP_HERR, e.what());
 			LOG(e.what());
 		}catch(...){}
 		exit(EXIT_FAILURE);
@@ -47,7 +47,7 @@ int main(int argc, char *argv[])
 		catch(fatal_exception &e)
 		{
 			try{
-				messaging::sendMessage("flashgot_output", e.what());
+				messaging::sendMessage(MSGTYP_HERR, e.what());
 				LOG(e.what());
 			}catch(...){}
 			//we exit after a fatal exception because otherwise the infinite loop will run rapidly
@@ -56,7 +56,7 @@ int main(int argc, char *argv[])
 		catch(exception &e)
 		{
 			try{
-				messaging::sendMessage("flashgot_output", e.what());
+				messaging::sendMessage(MSGTYP_HERR, e.what());
 				LOG(e.what());
 			}catch(...){}
 		}
@@ -203,7 +203,6 @@ void handleType4(const Json &msg)
 	string url = msg["url"].AsString();
 	std::thread th1(ytdl, url);
 	th1.detach();
-	messaging::sendMessage("flashgot_output", "thread started");
 }
 
 //launches FlashGot to perform a download with a DM
@@ -242,7 +241,7 @@ void ytdl(const string url)
 	}
 	catch(exception &e){
 		try{
-			messaging::sendMessage("error", e.what());
+			messaging::sendMessage(MSGTYP_HERR, e.what());
 			LOG(e.what());
 		}catch(...){}
 	}
