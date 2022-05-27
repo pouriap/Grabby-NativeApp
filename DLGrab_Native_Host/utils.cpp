@@ -228,12 +228,11 @@ string utils::launchExe(const string &exeName, const vector<string> &args, const
 	unsigned long bytesRead = 0;
 	unsigned long totalRead = 0;
 	bSuccess = FALSE;
-
 	std::vector<char> res;
-	res.reserve(BUFSIZE);
 
 	while(true)
 	{
+		res.reserve(BUFSIZE);
 		bSuccess = ReadFile(h_child_stdout_r, buf, BUFSIZE, &bytesRead, NULL);
 		if(!bSuccess || bytesRead<=0)
 		{
