@@ -282,7 +282,7 @@ void ytdl(const string &url, const char* type, vector<string> args)
 	try
 	{
 		args.push_back(url);
-		string ytdlOutput = utils::launchExe("ytdl.exe", args, handleDlProgress);
+		string ytdlOutput = utils::launchExe("ytdl.exe", args, true, handleDlProgress);
 		messaging::sendMessage(type, ytdlOutput);
 	}
 	catch(exception &e){
@@ -295,5 +295,10 @@ void ytdl(const string &url, const char* type, vector<string> args)
 
 void handleDlProgress(string output)
 {
-	messaging::sendMessage(MSGTYP_HDLPROG, output);
+	//output is like \r[download]   2.3% of 1.33MiB at 108.51KiB/s ETA 00:12
+	vector<string> parts = utils::strSplit(output, ' ');
+	if(parts.size()>0 && output.find('%')!=string::npos)
+	{
+		messaging::sendMessage(MSGTYP_HDLPROG, parts[1]);
+	}
 }

@@ -268,3 +268,22 @@ void utils::strReplaceAll(std::string &data, const std::string &toSearch, const 
 		pos =data.find(toSearch, pos + replaceStr.size());
 	}
 }
+
+vector<string> utils::strSplit(const string &str, const char delim)
+{
+	vector<string> parts;
+	stringstream stream(str);
+	string temp;
+
+	if(str.find(delim) == string::npos){
+		return parts;
+	}
+
+	while(getline(stream, temp, delim))
+	{
+		if(temp.size()>0)
+			parts.push_back(temp);
+	}
+
+	return parts;
+}
