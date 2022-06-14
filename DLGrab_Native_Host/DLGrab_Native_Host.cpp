@@ -32,7 +32,7 @@ int main(int argc, char *argv[])
 	catch(exception &e)
 	{
 		try{
-			messaging::sendMessage(MSGTYP_HERR, e.what());
+			messaging::sendMessage(MSGTYP_ERR, e.what());
 			PLOG_FATAL << e.what();
 		}catch(...){}
 		exit(EXIT_FAILURE);
@@ -46,13 +46,14 @@ int main(int argc, char *argv[])
 		try
 		{
 			string raw_message = messaging::get_message();
+			PLOG_INFO << "received message: " << raw_message;
 			Json &msg = utils::parseJSON(raw_message);
 			processMessage(msg);
 		}
 		catch(fatal_exception &e)
 		{
 			try{
-				messaging::sendMessage(MSGTYP_HERR, e.what());
+				messaging::sendMessage(MSGTYP_ERR, e.what());
 				PLOG_FATAL << e.what();
 			}catch(...){}
 			//we exit after a fatal exception because otherwise the infinite loop will run rapidly
@@ -61,7 +62,7 @@ int main(int argc, char *argv[])
 		catch(exception &e)
 		{
 			try{
-				messaging::sendMessage(MSGTYP_HERR, e.what());
+				messaging::sendMessage(MSGTYP_ERR, e.what());
 				PLOG_ERROR << e.what();
 			}catch(...){}
 		}
@@ -99,11 +100,8 @@ void processMessage(const Json &msg)
 	try
 	{
 		string type = msg["type"].AsString();
-		if(type == MSGTYP_HOST_AVAIL)
-		{
-			handleType1(msg);
-		}
-		else if(type == MSGTYP_GET_AVAIL_DMS)
+
+		if(type == MSGTYP_GET_AVAIL_DMS)
 		{
 			handleType2(msg);
 		}
@@ -134,14 +132,6 @@ void processMessage(const Json &msg)
 		msg.append(e.what());
 		throw dlg_exception(msg.c_str());
 	}
-}
-
-//handles "native_client_available" request
-void handleType1(const Json &msg)
-{
-	Json json = Json::Parse("{}");
-	json.AddProperty("type", Json("native_client_available"));
-	messaging::sendMessage(json);
 }
 
 //handles "get_available_dms" request
@@ -218,15 +208,17 @@ void handleType3(const Json &msg)
 void handleType4(const Json &msg)
 {
 	string url = msg["url"].AsString();
-	std::thread th1(ytdl_info, url);
+	string dlHash = msg["dlHash"].AsString();
+	std::thread th1(ytdl_info, url, dlHash);
 	th1.detach();
 }
 
 void handleType5(const Json &msg)
 {
 	string url = msg["url"].AsString();
+	string dlHash = msg["dlHash"].AsString();
 	string formatID = msg["format_id"].AsString();
-	std::thread th1(ytdl_video, url, formatID);
+	std::thread th1(ytdl_video, url, dlHash, formatID);
 	th1.detach();
 }
 
@@ -257,37 +249,54 @@ void flashGot(const string &jobText)
 	}
 }
 
-void ytdl_info(const string &url)
+void ytdl_info(const string &url, const string &dlHash)
 {
 	vector<string> args;
 	args.push_back("-j");
-	ytdl(url, MSGTYP_HYTDLINFO, args);
+	ytdl(url, dlHash, MSGTYP_YTDL_INFO, args);
 }
 
-void ytdl_video(const string &url, const string &formatID)
+void ytdl_video(const string &url, const string &dlHash, const string &formatID)
 {
 	vector<string> args;
 	args.push_back("-f");
 	args.push_back(formatID);
-	ytdl(url, MSGTYP_HDLPROG, args);
+	ytdl(url, dlHash, MSGTYP_YTDLPROG, args);
 }
 
-void ytdl_audio(const string &url)
+void ytdl_audio(const string &url, const string &dlHash)
 {
 
 }
 
-void ytdl(const string &url, const char* type, vector<string> args)
+void ytdl(const string &url, const string &dlHash, const char* type, vector<string> args)
 {
 	try
 	{
 		args.push_back(url);
 		string ytdlOutput = utils::launchExe("ytdl.exe", args, true, handleDlProgress);
-		messaging::sendMessage(type, ytdlOutput);
+
+		Json info;
+
+		try{
+			info = utils::parseJSON(ytdlOutput.c_str());
+		}
+		catch(...){
+			//YTDL output not JSON
+			//Happens when YTDL outputs an error
+			//Couldn't they output the error as json to be graceful? :(
+			info = Json(ytdlOutput);
+		}
+
+		Json msg = Json::Parse("{}");
+		msg.AddProperty("type", Json(MSGTYP_YTDL_INFO));
+		msg.AddProperty("dlHash", Json(dlHash));
+		msg.AddProperty("info", info);
+		messaging::sendMessage(msg);
 	}
 	catch(exception &e){
 		try{
-			messaging::sendMessage(MSGTYP_HERR, e.what());
+			messaging::sendMessage(MSGTYP_ERR, e.what());
 			PLOG_ERROR << e.what();
 		}catch(...){}
 	}
@@ -299,6 +308,6 @@ void handleDlProgress(string output)
 	vector<string> parts = utils::strSplit(output, ' ');
 	if(parts.size()>0 && output.find('%')!=string::npos)
 	{
-		messaging::sendMessage(MSGTYP_HDLPROG, parts[1]);
+		messaging::sendMessage(MSGTYP_YTDLPROG, parts[1]);
 	}
 }
