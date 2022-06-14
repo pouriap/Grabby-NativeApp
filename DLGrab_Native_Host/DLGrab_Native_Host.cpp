@@ -207,9 +207,10 @@ void handleType3(const Json &msg)
 
 void handleType4(const Json &msg)
 {
-	string url = msg["url"].AsString();
+	string pageUrl = msg["url"].AsString();
+	string manifestUrl = msg["manifest_url"].AsString();
 	string dlHash = msg["dlHash"].AsString();
-	std::thread th1(ytdl_info, url, dlHash);
+	std::thread th1(ytdl_info, pageUrl, manifestUrl, dlHash);
 	th1.detach();
 }
 
@@ -249,50 +250,65 @@ void flashGot(const string &jobText)
 	}
 }
 
-void ytdl_info(const string &url, const string &dlHash)
+void ytdl_info(const string &pageurl, const string &manifestUrl, const string &dlHash)
 {
 	vector<string> args;
 	args.push_back("-j");
-	ytdl(url, dlHash, MSGTYP_YTDL_INFO, args);
+	string ytdlOutput = ytdl(pageurl, args);
+
+	Json info;
+	bool isFromManifest = false;
+
+	try
+	{
+		info = utils::parseJSON(ytdlOutput.c_str());
+	}
+	catch(...)
+	{
+		//YTDL output not JSON
+		//Happens when YTDL outputs an error
+		//Let's try with the manifest itself
+		ytdlOutput = ytdl(manifestUrl, args);
+		try
+		{
+			info = utils::parseJSON(ytdlOutput.c_str());
+			isFromManifest = true;
+		}
+		catch(...)
+		{
+			//Must be some shit if even this one fails
+			info = Json(ytdlOutput);
+		}
+	}
+
+	Json msg = Json::Parse("{}");
+	msg.AddProperty("type", Json(MSGTYP_YTDL_INFO));
+	msg.AddProperty("dlHash", Json(dlHash));
+	msg.AddProperty("info", info);
+	if(isFromManifest){
+		msg.AddProperty("is_from_manifest", Json(isFromManifest));
+	}
+	messaging::sendMessage(msg);
+
 }
 
 void ytdl_video(const string &url, const string &dlHash, const string &formatID)
 {
-	vector<string> args;
-	args.push_back("-f");
-	args.push_back(formatID);
-	ytdl(url, dlHash, MSGTYP_YTDLPROG, args);
+	//TODO
 }
 
 void ytdl_audio(const string &url, const string &dlHash)
 {
-
+	//TODO
 }
 
-void ytdl(const string &url, const string &dlHash, const char* type, vector<string> args)
+string ytdl(const string &url, vector<string> args)
 {
 	try
 	{
 		args.push_back(url);
 		string ytdlOutput = utils::launchExe("ytdl.exe", args, true, handleDlProgress);
-
-		Json info;
-
-		try{
-			info = utils::parseJSON(ytdlOutput.c_str());
-		}
-		catch(...){
-			//YTDL output not JSON
-			//Happens when YTDL outputs an error
-			//Couldn't they output the error as json to be graceful? :(
-			info = Json(ytdlOutput);
-		}
-
-		Json msg = Json::Parse("{}");
-		msg.AddProperty("type", Json(MSGTYP_YTDL_INFO));
-		msg.AddProperty("dlHash", Json(dlHash));
-		msg.AddProperty("info", info);
-		messaging::sendMessage(msg);
+		return ytdlOutput;
 	}
 	catch(exception &e){
 		try{
