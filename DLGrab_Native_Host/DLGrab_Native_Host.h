@@ -19,5 +19,5 @@ void flashGot(const string &jobText);
 void ytdl_info(const string &pageUrl, const string &manifestUrl, const string &dlHash);
 void ytdl_video(const string &url, const string &dlHash, const string &formatID);
 void ytdl_audio(const string &url, const string &dlHash);
-string ytdl(const string &url, vector<string> args);
+string ytdl(const string &url, vector<string> args, void (*onOutput)(std::string output) = NULL);
 void handleDlProgress(string output);

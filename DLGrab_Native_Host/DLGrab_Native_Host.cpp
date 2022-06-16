@@ -207,7 +207,7 @@ void handleType3(const Json &msg)
 
 void handleType4(const Json &msg)
 {
-	string pageUrl = msg["url"].AsString();
+	string pageUrl = msg["page_url"].AsString();
 	string manifestUrl = msg["manifest_url"].AsString();
 	string dlHash = msg["dlHash"].AsString();
 	std::thread th1(ytdl_info, pageUrl, manifestUrl, dlHash);
@@ -302,12 +302,12 @@ void ytdl_audio(const string &url, const string &dlHash)
 	//TODO
 }
 
-string ytdl(const string &url, vector<string> args)
+string ytdl(const string &url, vector<string> args, void (*onOutput)(string output))
 {
 	try
 	{
 		args.push_back(url);
-		string ytdlOutput = utils::launchExe("ytdl.exe", args, true, handleDlProgress);
+		string ytdlOutput = utils::launchExe("ytdl.exe", args, true, onOutput);
 		return ytdlOutput;
 	}
 	catch(exception &e){
