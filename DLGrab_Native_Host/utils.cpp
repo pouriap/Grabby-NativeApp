@@ -4,6 +4,7 @@
 #include "utf8.h"
 #include "fileapi.h"
 #include <ctime>
+#include <strsafe.h>
 #include "exceptions.h"
 #include "defines.h"
 
@@ -174,23 +175,49 @@ string utils::launchExe( const std::string &exeName, const std::vector<std::stri
 
 	DWORD processFlags = CREATE_NO_WINDOW | CREATE_UNICODE_ENVIRONMENT;
 
-	string cmd(exeName);
+	//first part of cmd line has to also be the application name
+	string cmd = "";
+	cmd.append("\"").append(exeName).append("\"");
+
+	//create cmd line of arguments from the args vector
 	for(int i=0; i<args.size(); i++)
 	{
 		//if it's an empty string don't add anything to command line
 		if(args[i].length() == 0){
 			continue;
 		}
-		cmd.append(" ");
-		cmd.append("\"");
-		cmd.append(args[i]);
-		cmd.append("\"");
+		cmd.append(" ").append("\"").append(args[i]).append("\"");
 	}
 
+	if(exeName.length() > MAX_PATH)
+	{
+		throw dlg_exception("Executable file name is too big");
+	}
+
+	if(cmd.length() > CMD_MAX_LEN)
+	{
+		throw dlg_exception("Command line too big");
+	}
+
+	if(
+		cmd.find('&') != string::npos ||
+		cmd.find('<') != string::npos ||
+		cmd.find('>') != string::npos ||
+		cmd.find('^') != string::npos ||
+		cmd.find('|') != string::npos
+	){
+		throw dlg_exception("Illegal character(s) in command line");
+	}
+
+	PLOG_INFO << "exe name: " << exeName << " - cmd: " << cmd;
+
+	WCHAR cmdWchar[CMD_MAX_LEN] = { '\0' };
+	StringCchCopyW(cmdWchar, CMD_MAX_LEN, utf8::widen(cmd).c_str());
+
 	// Create the child process. 
-	bSuccess = CreateProcess(
-		const_cast<wchar_t *>(utf8::widen(exeName).c_str()),		// application name
-		const_cast<wchar_t *>(utf8::widen(cmd).c_str()),           // command line
+	bSuccess = CreateProcessW(
+		utf8::widen(exeName).c_str(),		// application name
+		cmdWchar,      // command line
 		NULL,          // process security attributes 
 		NULL,          // primary thread security attributes 
 		TRUE,          // handles are inherited 

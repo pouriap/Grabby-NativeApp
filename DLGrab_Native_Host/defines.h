@@ -2,7 +2,11 @@
 
 //TODO: make types integer?
 
+//general defines
 #define DLG_ADDON_ID "download.grab.pouriap"
+#define CMD_MAX_LEN 4096
+
+//message types
 #define MSGTYP_GET_AVAIL_DMS "get_available_dms"
 #define MSGTYP_AVAIL_DMS "available_dms"
 #define MSGTYP_DOWNLOAD "download"
