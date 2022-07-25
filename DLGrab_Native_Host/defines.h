@@ -12,4 +12,6 @@
 #define MSGTYP_YTDLPROG "app_download_progress"
 #define MSGTYP_ERR "app_error"
 #define MSGTYP_MSG "app_message"
+#define MSGTYP_YTDL_COMP "ytdl_comp"
+#define MSGTYP_YTDL_FAIL "ytdl_fail"
 #define MSGTYP_UNSUPP "unsupported"

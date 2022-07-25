@@ -3,6 +3,7 @@
 //TODO: make sure everything is x86
 //TODO: check licence of programs for redistribution
 //TODO: vc++ 2015 is needed for yt-dlp(x86)
+//TODO: change main to int _tmain(int argc, TCHAR *argv[])
 
 #include "stdafx.h"
 #include <iostream>
@@ -217,15 +218,21 @@ void handleType4(const Json &msg)
 void handleType5(const Json &msg)
 {
 	string url = msg["url"].AsString();
+	string name = msg["name"].AsString();
+	string location = msg["location"].AsString();
 	string dlHash = msg["dlHash"].AsString();
-	string formatID = msg["format_id"].AsString();
-	std::thread th1(ytdl_video, url, dlHash, formatID);
+	std::thread th1(ytdl_video, url, name, location, dlHash);
 	th1.detach();
 }
 
 void handleType6(const Json &msg)
 {
-
+	string url = msg["url"].AsString();
+	string name = msg["name"].AsString();
+	string location = msg["location"].AsString();
+	string dlHash = msg["dlHash"].AsString();
+	std::thread th1(ytdl_audio, url, name, location, dlHash);
+	th1.detach();
 }
 
 //launches FlashGot to perform a download with a DM
@@ -292,12 +299,35 @@ void ytdl_info(const string &pageurl, const string &manifestUrl, const string &d
 
 }
 
-void ytdl_video(const string &url, const string &dlHash, const string &formatID)
+void ytdl_video(const string &url, const string &name, const string &location, const string &dlHash)
 {
-	//TODO
+	Json msg = Json::Parse("{}");
+
+	try
+	{
+		string output = "";
+		output.append(location).append("\\").append(name).append(".%(ext)s");
+
+		vector<string> args;
+		args.push_back("--output");
+		args.push_back(output);
+
+		ytdl(url, args);
+
+		msg.AddProperty("type", Json(MSGTYP_YTDL_COMP));
+		msg.AddProperty("dlHash", Json(dlHash));
+	}
+	catch(...)
+	{
+		msg.AddProperty("type", Json(MSGTYP_YTDL_FAIL));
+		msg.AddProperty("dlHash", Json(dlHash));
+	}
+
+	messaging::sendMessage(msg);
+
 }
 
-void ytdl_audio(const string &url, const string &dlHash)
+void ytdl_audio(const string &url, const string &name, const string &location, const string &dlHash)
 {
 	//TODO
 }
