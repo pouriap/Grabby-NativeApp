@@ -19,8 +19,7 @@ public:
 		const bool returnOutput = true, void (*onOutput)(std::string output) = NULL );
 	static void strReplaceAll(std::string &data, const std::string &toSearch, const std::string &replaceStr);
 	static std::vector<std::string> strSplit(const std::string &str, const char delim);
-	static std::string saveDialogOld();
-	static std::string saveDialogNew();
+	static std::string saveDialog(const std::string &filename);
 
 private:
 	static std::string getSpecialPath(REFKNOWNFOLDERID rfid);

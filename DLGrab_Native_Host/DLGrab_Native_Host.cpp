@@ -305,8 +305,15 @@ void ytdl_video(const string &url, const string &name, const string &location, c
 
 	try
 	{
-		string output = "";
-		output.append(location).append("\\").append(name).append(".%(ext)s");
+		string output = utils::saveDialog(name);
+
+		//if it's cancelled do nothing
+		if(output.length() == 0)
+		{
+			return;
+		}
+
+		output.append(".%(ext)s");
 
 		vector<string> args;
 		args.push_back("--output");

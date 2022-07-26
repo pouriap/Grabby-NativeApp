@@ -5,11 +5,15 @@
 #include "fileapi.h"
 #include <ctime>
 #include <strsafe.h>
+#include <mutex>
 #include "exceptions.h"
 #include "defines.h"
 
 using namespace std;
 using namespace ggicci;
+
+
+std::mutex guiMutex;
 
 
 utils::utils(void)
@@ -315,22 +319,24 @@ vector<string> utils::strSplit(const string &str, const char delim)
 	return parts;
 }
 
-string utils::saveDialogOld()
+string utils::saveDialog(const string &filename)
 {
+	//UI in multiple threads bad
+	std::lock_guard<std::mutex> lock(guiMutex);
+
 	OPENFILENAMEW ofn;
 	WCHAR szFileName[MAX_PATH];
-
-	string filename("file name.txt");
 
 	ZeroMemory(&szFileName, sizeof(szFileName));
 	ZeroMemory(&ofn, sizeof(ofn));
 	StringCchCopy(szFileName, MAX_PATH, utf8::widen(filename).c_str());
 
+	ofn.hwndOwner = GetFocus();
 	ofn.lpstrTitle = L"Save As";
 	ofn.lStructSize = sizeof(ofn);
 	ofn.lpstrFile = szFileName;
 	ofn.nMaxFile = ARRAYSIZE(szFileName);
-	ofn.Flags = OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT;
+	ofn.Flags = OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT | OFN_NOCHANGEDIR;
 
 	if (!GetSaveFileNameW(&ofn))
 	{
@@ -338,67 +344,4 @@ string utils::saveDialogOld()
 	}
 
 	return utf8::narrow(szFileName);
-}
-
-string utils::saveDialogNew()
-{
-	string ret("");
-
-	CoInitialize(nullptr);
-
-	// CoCreate the File Open Dialog object.
-	IFileDialog *dialog = NULL;
-	HRESULT hr = CoCreateInstance(CLSID_FileSaveDialog, 
-		NULL, 
-		CLSCTX_INPROC_SERVER, 
-		IID_PPV_ARGS(&dialog));
-
-	if (SUCCEEDED(hr))
-	{
-		// Set the options on the dialog.
-		DWORD dwFlags;
-
-		// Before setting, always get the options first in order 
-		// not to override existing options.
-		hr = dialog->GetOptions(&dwFlags);
-		if (SUCCEEDED(hr))
-		{
-			// In this case, get shell items only for file system items.
-			hr = dialog->SetOptions(dwFlags | FOS_FORCEFILESYSTEM);
-			if (SUCCEEDED(hr))
-			{
-				// Show the dialog
-				hr = dialog->Show(NULL);
-				if (SUCCEEDED(hr))
-				{
-					// Obtain the result once the user clicks 
-					// the 'Open' button.
-					// The result is an IShellItem object.
-					IShellItem *psiResult;
-					hr = dialog->GetResult(&psiResult);
-					if (SUCCEEDED(hr))
-					{
-						// We are just going to print out the 
-						// name of the file for sample sake.
-						PWSTR pszFilePath = NULL;
-						hr = psiResult->GetDisplayName(SIGDN_FILESYSPATH, 
-							&pszFilePath);
-
-						if (SUCCEEDED(hr))
-						{
-							ret = utf8::narrow(pszFilePath);
-						}
-
-						psiResult->Release();
-
-					}
-				}
-			}
-		}
-
-		dialog->Release();
-	}
-
-	return ret;
-
 }
