@@ -203,15 +203,7 @@ string utils::launchExe( const std::string &exeName, const std::vector<std::stri
 		throw dlg_exception("Command line too big");
 	}
 
-	if(
-		cmd.find('&') != string::npos ||
-		cmd.find('<') != string::npos ||
-		cmd.find('>') != string::npos ||
-		cmd.find('^') != string::npos ||
-		cmd.find('|') != string::npos
-	){
-		throw dlg_exception("Illegal character(s) in command line");
-	}
+	//todo: sanitize command line, what characters are allowed?
 
 	PLOG_INFO << "exe name: " << exeName << " - cmd: " << cmd;
 
