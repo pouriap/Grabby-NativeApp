@@ -345,3 +345,41 @@ string utils::saveDialog(const string &filename)
 
 	return utf8::narrow(szFileName);
 }
+
+string utils::sanitizeFilename(const char* filename)
+{
+	string newName("");
+
+	const char illegalChars[9] = { '<', '>', ':', '"', '/', '\\', '|', '?', '*' };
+
+	for(int i=0; i < strlen(filename)-1; i++)
+	{
+		char c = filename[i];
+		bool replace = false;
+
+		//check for non-printable characters
+		if(c < 32 || c > 126){
+			replace = true;
+		}
+		//check in illegal characters
+		else
+		{
+			for(int j=0; j<sizeof(illegalChars); j++)
+			{
+				if(c == illegalChars[j]){
+					replace = true;
+					break;
+				}
+			}
+		}
+
+		if(!replace){
+			newName += c;
+		}
+		else{
+			newName += '_';
+		}
+	}
+
+	return newName;
+}

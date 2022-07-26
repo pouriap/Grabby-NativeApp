@@ -20,6 +20,7 @@ public:
 	static void strReplaceAll(std::string &data, const std::string &toSearch, const std::string &replaceStr);
 	static std::vector<std::string> strSplit(const std::string &str, const char delim);
 	static std::string saveDialog(const std::string &filename);
+	static std::string sanitizeFilename(const char* filename);
 
 private:
 	static std::string getSpecialPath(REFKNOWNFOLDERID rfid);

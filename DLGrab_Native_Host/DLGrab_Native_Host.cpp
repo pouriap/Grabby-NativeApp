@@ -305,7 +305,8 @@ void ytdl_video(const string &url, const string &name, const string &location, c
 
 	try
 	{
-		string output = utils::saveDialog(name);
+		string safeName = utils::sanitizeFilename(name.c_str());
+		string output = utils::saveDialog(safeName);
 
 		//if it's cancelled do nothing
 		if(output.length() == 0)
