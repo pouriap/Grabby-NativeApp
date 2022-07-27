@@ -203,8 +203,6 @@ string utils::launchExe( const std::string &exeName, const std::vector<std::stri
 		throw dlg_exception("Command line too big");
 	}
 
-	//todo: sanitize command line, what characters are allowed?
-
 	PLOG_INFO << "exe name: " << exeName << " - cmd: " << cmd;
 
 	WCHAR cmdWchar[CMD_MAX_LEN] = { '\0' };
@@ -218,7 +216,7 @@ string utils::launchExe( const std::string &exeName, const std::vector<std::stri
 		NULL,          // primary thread security attributes 
 		TRUE,          // handles are inherited 
 		processFlags,  // creation flags 
-		NULL,          // use parent's environment 
+		NULL,          // use parent environment
 		NULL,          // use parent's current directory 
 		&siStartInfo,  // STARTUPINFO pointer 
 		&piProcInfo);  // receives PROCESS_INFORMATION 
@@ -278,6 +276,8 @@ string utils::launchExe( const std::string &exeName, const std::vector<std::stri
 		throw dlg_exception("Failed to read process output");
 	}
 
+	PLOG_INFO << "app output be: " << string(output.begin(), output.end());
+
 	return string(output.begin(), output.end());
 
 }
@@ -323,7 +323,7 @@ string utils::saveDialog(const string &filename)
 	ZeroMemory(&ofn, sizeof(ofn));
 	StringCchCopy(szFileName, MAX_PATH, utf8::widen(filename).c_str());
 
-	ofn.hwndOwner = GetFocus();
+	ofn.hwndOwner = GetActiveWindow();
 	ofn.lpstrTitle = L"Save As";
 	ofn.lStructSize = sizeof(ofn);
 	ofn.lpstrFile = szFileName;
