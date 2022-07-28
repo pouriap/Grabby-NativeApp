@@ -4,6 +4,12 @@
 //TODO: check licence of programs for redistribution
 //TODO: vc++ 2015 is needed for yt-dlp(x86)
 //TODO: change main to int _tmain(int argc, TCHAR *argv[]) in flashgot too
+//policies
+//nothing is allowed to consume an exception except for main()
+//if a function wants to catch an exception it must rethrow it
+//except for main functions of threads, they MUST consume their own exception
+//all thread main function names should end with _th
+//all thread main functions should have their whole body enclosed in a try-catch
 
 #include "stdafx.h"
 #include <iostream>
@@ -38,6 +44,15 @@ int wmain(int argc, WCHAR *argv[], WCHAR *envp[])
 		}catch(...){}
 		exit(EXIT_FAILURE);
 	}
+	//same just for unknown exceptions
+	catch(...)
+	{
+		try{
+			messaging::sendMessage(MSGTYP_ERR, "A fatal error has occurred");
+			PLOG_FATAL << "A fatal error has occurred";
+		}catch(...){}
+		exit(EXIT_FAILURE);
+	}
 
 	PLOG_INFO << "starting native host";
 
@@ -67,6 +82,15 @@ int wmain(int argc, WCHAR *argv[], WCHAR *envp[])
 				PLOG_ERROR << e.what();
 			}catch(...){}
 		}
+		//same just for unknown exceptions
+		catch(...)
+		{
+			try{
+				messaging::sendMessage(MSGTYP_ERR, "An unknown error has occurred");
+				PLOG_ERROR << "An unknown error has occurred";
+			}catch(...){}
+		}
+
     }
 }
 
@@ -126,6 +150,10 @@ void processMessage(const Json &msg)
 		{
 			messaging::sendMessage(MSGTYP_UNSUPP, "Unsupported message type");
 		}
+	}
+	catch(dlg_exception &e)
+	{
+		throw e;
 	}
 	catch(exception &e)
 	{
@@ -211,7 +239,7 @@ void handleType4(const Json &msg)
 	string pageUrl = msg["page_url"].AsString();
 	string manifestUrl = msg["manifest_url"].AsString();
 	string dlHash = msg["dlHash"].AsString();
-	std::thread th1(ytdl_info, pageUrl, manifestUrl, dlHash);
+	std::thread th1(ytdl_info_th, pageUrl, manifestUrl, dlHash);
 	th1.detach();
 }
 
@@ -221,7 +249,7 @@ void handleType5(const Json &msg)
 	string name = msg["name"].AsString();
 	string location = msg["location"].AsString();
 	string dlHash = msg["dlHash"].AsString();
-	std::thread th1(ytdl_video, url, name, location, dlHash);
+	std::thread th1(ytdl_video_th, url, name, location, dlHash);
 	th1.detach();
 }
 
@@ -231,7 +259,7 @@ void handleType6(const Json &msg)
 	string name = msg["name"].AsString();
 	string location = msg["location"].AsString();
 	string dlHash = msg["dlHash"].AsString();
-	std::thread th1(ytdl_audio, url, name, location, dlHash);
+	std::thread th1(ytdl_audio_th, url, name, location, dlHash);
 	th1.detach();
 }
 
@@ -257,58 +285,59 @@ void flashGot(const string &jobText)
 	}
 }
 
-void ytdl_info(const string &pageurl, const string &manifestUrl, const string &dlHash)
+void ytdl_info_th(const string &pageurl, const string &manifestUrl, const string &dlHash)
 {
-	vector<string> args;
-	args.push_back("-j");
-	string ytdlOutput = ytdl(pageurl, args);
-
-	Json info;
-	bool isFromManifest = false;
-
 	try
 	{
-		info = utils::parseJSON(ytdlOutput.c_str());
-	}
-	catch(...)
-	{
-		//YTDL output not JSON
-		//Happens when YTDL outputs an error
-		//Let's try with the manifest itself
-		ytdlOutput = ytdl(manifestUrl, args);
+		vector<string> args;
+		args.push_back("-j");
+		string ytdlOutput = ytdl(pageurl, args);
+
+		Json info;
+		bool isFromManifest = false;
+
 		try
 		{
 			info = utils::parseJSON(ytdlOutput.c_str());
-			isFromManifest = true;
 		}
 		catch(...)
 		{
-			//Must be some shit if even this one fails
-			info = Json(ytdlOutput);
+			//YTDL output not JSON
+			//Happens when YTDL outputs an error
+			//Let's try with the manifest itself
+			ytdlOutput = ytdl(manifestUrl, args);
+			try
+			{
+				info = utils::parseJSON(ytdlOutput.c_str());
+				isFromManifest = true;
+			}
+			catch(...)
+			{
+				//Must be some shit if even this one fails
+				info = Json(ytdlOutput);
+			}
 		}
-	}
 
-	Json msg = Json::Parse("{}");
-	msg.AddProperty("type", Json(MSGTYP_YTDL_INFO));
-	msg.AddProperty("dlHash", Json(dlHash));
-	msg.AddProperty("info", info);
-	if(isFromManifest){
-		msg.AddProperty("is_from_manifest", Json(isFromManifest));
+		Json msg = Json::Parse("{}");
+		msg.AddProperty("type", Json(MSGTYP_YTDL_INFO));
+		msg.AddProperty("dlHash", Json(dlHash));
+		msg.AddProperty("info", info);
+		if(isFromManifest){
+			msg.AddProperty("is_from_manifest", Json(isFromManifest));
+		}
+		messaging::sendMessage(msg);
 	}
-	messaging::sendMessage(msg);
-
+	catch(...){} 	//ain't nothing we can do if we're here
 }
 
-void ytdl_video(const string &url, const string &name, const string &location, const string &dlHash)
+void ytdl_video_th(const string &url, const string &name, const string &location, const string &dlHash)
 {
-	Json msg = Json::Parse("{}");
-
 	try
 	{
 		string safeName = utils::sanitizeFilename(name.c_str());
 		string output = utils::saveDialog(safeName);
 
-		//if it's cancelled do nothing
+		//if it's canceled do nothing
 		if(output.length() == 0)
 		{
 			return;
@@ -322,22 +351,34 @@ void ytdl_video(const string &url, const string &name, const string &location, c
 
 		ytdl(url, args);
 
+		Json msg = Json::Parse("{}");
 		msg.AddProperty("type", Json(MSGTYP_YTDL_COMP));
 		msg.AddProperty("dlHash", Json(dlHash));
+		messaging::sendMessage(msg);
 	}
-	catch(...)
+	catch(exception &e)
 	{
-		msg.AddProperty("type", Json(MSGTYP_YTDL_FAIL));
-		msg.AddProperty("dlHash", Json(dlHash));
+		string msg = "Error downloading video: ";
+		msg.append(e.what());
+		messaging::sendMessage(MSGTYP_ERR, msg);
 	}
-
-	messaging::sendMessage(msg);
-
+	catch(...){} 	//ain't nothing we can do if we're here
 }
 
-void ytdl_audio(const string &url, const string &name, const string &location, const string &dlHash)
+void ytdl_audio_th(const string &url, const string &name, const string &location, const string &dlHash)
 {
 	//TODO
+	try
+	{
+
+	}
+	catch(exception &e)
+	{
+		string msg = "Error downloading audio: ";
+		msg.append(e.what());
+		messaging::sendMessage(MSGTYP_ERR, msg);
+	}
+	catch(...){} 	//ain't nothing we can do if we're here
 }
 
 string ytdl(const string &url, vector<string> args, void (*onOutput)(string output))
@@ -362,13 +403,12 @@ string ytdl(const string &url, vector<string> args, void (*onOutput)(string outp
 		string ytdlOutput = utils::launchExe("ytdl.exe", args, true, onOutput);
 		return ytdlOutput;
 	}
-	catch(exception &e){
-		try{
-			messaging::sendMessage(MSGTYP_ERR, e.what());
-			PLOG_ERROR << e.what();
-		}catch(...){}
+	catch(exception &e)
+	{
+		string msg = "Error in YoutubeDL execution: ";
+		msg.append(e.what());
+		throw dlg_exception(msg.c_str());
 	}
-
 }
 
 void handleDlProgress(string output)
