@@ -3,6 +3,7 @@
 #include <string>
 #include <Shlobj.h>
 #include "jsonla.h"
+#include "output_callback.h"
 
 using namespace std;
 
@@ -17,7 +18,7 @@ public:
 	static bool mkdir(const string &dirName);
 	static string getDLGTempDir();
 	static DWORD launchExe(const string &exeName, const vector<string> &args, 
-		string *output = NULL, void (*onOutput)(const string &output) = NULL );
+		string *output = NULL, output_callback *callback = NULL );
 	static void strReplaceAll(string &data, const string &toSearch, const string &replaceStr);
 	static vector<string> strSplit(const string &str, const char delim);
 	static string saveDialog(const string &filename);

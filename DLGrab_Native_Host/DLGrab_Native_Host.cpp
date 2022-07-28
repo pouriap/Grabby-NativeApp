@@ -359,7 +359,9 @@ void ytdl_video_th(const string &url, const string &name, const string &dlHash)
 		args.push_back("--output");
 		args.push_back(savePath);
 
-		string output = ytdl(url, args, onProgress);
+		output_callback callback(dlHash);
+		string output = ytdl(url, args, &callback);
+
 		string type = (output.length() > 0) ? MSGTYP_YTDL_COMP : MSGTYP_YTDL_FAIL;
 
 		Json msg = Json::Parse("{}");
@@ -391,7 +393,7 @@ void ytdl_audio_th(const string &url, const string &name, const string &dlHash)
 	catch(...){} 	//ain't nothing we can do if we're here
 }
 
-string ytdl(const string &url, vector<string> args, void (*onOutput)(const string &output))
+string ytdl(const string &url, vector<string> args, output_callback *callback)
 {
 	try
 	{
@@ -411,7 +413,7 @@ string ytdl(const string &url, vector<string> args, void (*onOutput)(const strin
 
 		args.push_back(url);
 		string output("");
-		DWORD exitCode = utils::launchExe("ytdl.exe", args, &output, onOutput);
+		DWORD exitCode = utils::launchExe("ytdl.exe", args, &output, callback);
 
 		//if our output is empty our callers know something went wrong
 		if(exitCode != 0)
@@ -426,17 +428,5 @@ string ytdl(const string &url, vector<string> args, void (*onOutput)(const strin
 		string msg = "Error in YoutubeDL execution: ";
 		msg.append(e.what());
 		throw dlg_exception(msg.c_str());
-	}
-}
-
-void onProgress(const string &output)
-{
-	//output is like \r[download]   2.3% of 1.33MiB at 108.51KiB/s ETA 00:12
-	//get last line of output, cause output can be multiple lines
-	vector<string> lines = utils::strSplit(output, '\n');
-	vector<string> parts = utils::strSplit(lines.back(), ' ');
-	if(parts.size()>0 && output.find('%')!=string::npos)
-	{
-		messaging::sendMessageLimit(MSGTYP_YTDLPROG, parts[1], 1);
 	}
 }

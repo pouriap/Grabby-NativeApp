@@ -124,8 +124,7 @@ string utils::getDLGTempDir()
 //h_child_stdout_w
 //h_child_stdin_r
 //h_child_stdin_w
-DWORD utils::launchExe( const string &exeName, const vector<string> &args, 
-						string *output, void (*onOutput)(const string &output) )
+DWORD utils::launchExe(const string &exeName, const vector<string> &args, string *output, output_callback *callback)
 {
 	HANDLE h_child_stdout_r = NULL;
 	HANDLE h_child_stdout_w = NULL;
@@ -257,10 +256,10 @@ DWORD utils::launchExe( const string &exeName, const vector<string> &args,
 		totalRead += bytesRead;
 		//pass output to callback function
 		//ReadFile returns when it reaches a carriage return
-		if(onOutput != NULL)
+		if(callback != NULL)
 		{
 			string outStr(buf, buf+bytesRead);
-			onOutput(outStr);
+			callback->call(outStr);
 		}
 	}
 

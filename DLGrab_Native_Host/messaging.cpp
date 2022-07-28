@@ -77,12 +77,12 @@ void messaging::sendMessage(const string &type, const string &content)
 	sendMessage(json);
 }
 
-void messaging::sendMessageLimit(const string &type, const string &content, int interval)
+void messaging::sendMessageLimit(const ggicci::Json &msg, int interval)
 {
 	std::time_t t = std::time(nullptr) - lastSentTime;
 	if(t >= interval)
 	{
-		sendMessage(type, content);
+		sendMessage(msg);
 	}
 }
 
