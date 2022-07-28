@@ -4,6 +4,7 @@
 //TODO: check licence of programs for redistribution
 //TODO: vc++ 2015 is needed for yt-dlp(x86)
 //TODO: change main to int _tmain(int argc, TCHAR *argv[]) in flashgot too
+
 //policies
 //nothing is allowed to consume an exception except for main()
 //if a function wants to catch an exception it must rethrow it
@@ -128,23 +129,23 @@ void processMessage(const Json &msg)
 
 		if(type == MSGTYP_GET_AVAIL_DMS)
 		{
-			handleType2(msg);
+			handle_getavail(msg);
 		}
 		else if(type == MSGTYP_DOWNLOAD)
 		{
-			handleType3(msg);
+			handle_download(msg);
 		}
 		else if(type == MSGTYP_YTDL_INFO)
 		{
-			handleType4(msg);
+			handle_ytdlinfo(msg);
 		}
 		else if(type == MSGTYP_YTDL_VID)
 		{
-			handleType5(msg);
+			handle_ytdlvid(msg);
 		}
 		else if(type == MSGTYP_YTDL_AUD)
 		{
-			handleType6(msg);
+			handle_ytdlaud(msg);
 		}
 		else
 		{
@@ -164,7 +165,7 @@ void processMessage(const Json &msg)
 }
 
 //handles "get_available_dms" request
-void handleType2(const Json &msg)
+void handle_getavail(const Json &msg)
 {
 	//TODO: output this directly from flashgot.exe
 	vector<string> args;
@@ -196,7 +197,7 @@ void handleType2(const Json &msg)
 
 //TODO: make FlashGot directly accept the JSON as job file instead of this 
 //handles "download" request
-void handleType3(const Json &msg)
+void handle_download(const Json &msg)
 {
 	const Json &job = msg["job"];
 	const Json &downloadsInfo = job["downloadsInfo"];
@@ -244,7 +245,7 @@ void handleType3(const Json &msg)
 	flashGot(jobText);
 }
 
-void handleType4(const Json &msg)
+void handle_ytdlinfo(const Json &msg)
 {
 	string pageUrl = msg["page_url"].AsString();
 	string manifestUrl = msg["manifest_url"].AsString();
@@ -253,7 +254,7 @@ void handleType4(const Json &msg)
 	th1.detach();
 }
 
-void handleType5(const Json &msg)
+void handle_ytdlvid(const Json &msg)
 {
 	string url = msg["url"].AsString();
 	string name = msg["name"].AsString();
@@ -262,7 +263,7 @@ void handleType5(const Json &msg)
 	th1.detach();
 }
 
-void handleType6(const Json &msg)
+void handle_ytdlaud(const Json &msg)
 {
 	string url = msg["url"].AsString();
 	string name = msg["name"].AsString();
