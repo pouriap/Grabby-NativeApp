@@ -247,9 +247,8 @@ void handleType5(const Json &msg)
 {
 	string url = msg["url"].AsString();
 	string name = msg["name"].AsString();
-	string location = msg["location"].AsString();
 	string dlHash = msg["dlHash"].AsString();
-	std::thread th1(ytdl_video_th, url, name, location, dlHash);
+	std::thread th1(ytdl_video_th, url, name, dlHash);
 	th1.detach();
 }
 
@@ -257,9 +256,8 @@ void handleType6(const Json &msg)
 {
 	string url = msg["url"].AsString();
 	string name = msg["name"].AsString();
-	string location = msg["location"].AsString();
 	string dlHash = msg["dlHash"].AsString();
-	std::thread th1(ytdl_audio_th, url, name, location, dlHash);
+	std::thread th1(ytdl_audio_th, url, name, dlHash);
 	th1.detach();
 }
 
@@ -330,7 +328,7 @@ void ytdl_info_th(const string &pageurl, const string &manifestUrl, const string
 	catch(...){} 	//ain't nothing we can do if we're here
 }
 
-void ytdl_video_th(const string &url, const string &name, const string &location, const string &dlHash)
+void ytdl_video_th(const string &url, const string &name, const string &dlHash)
 {
 	try
 	{
@@ -365,12 +363,11 @@ void ytdl_video_th(const string &url, const string &name, const string &location
 	catch(...){} 	//ain't nothing we can do if we're here
 }
 
-void ytdl_audio_th(const string &url, const string &name, const string &location, const string &dlHash)
+void ytdl_audio_th(const string &url, const string &name, const string &dlHash)
 {
-	//TODO
 	try
 	{
-
+		//TODO
 	}
 	catch(exception &e)
 	{
