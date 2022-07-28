@@ -113,12 +113,6 @@ std::string utils::getDLGTempDir()
 	return DLGTempDir;
 }
 
-string utils::launchExe(const std::string &exeName, const bool returnOutput)
-{
-	std::vector<std::string> args;
-	return launchExe(exeName, args, returnOutput);
-}
-
 // a pipe has two ends, a read handle and a write handle
 // the read handle reads from it, the write handle writes to it
 // we make two pipes and end up with 2 read handles and 2 write handles
@@ -130,8 +124,8 @@ string utils::launchExe(const std::string &exeName, const bool returnOutput)
 //h_child_stdout_w
 //h_child_stdin_r
 //h_child_stdin_w
-string utils::launchExe( const std::string &exeName, const std::vector<std::string> &args, 
-						const bool returnOutput, void (*onOutput)(string output) )
+DWORD utils::launchExe( const std::string &exeName, const std::vector<std::string> &args, 
+						std::string *output, void (*onOutput)(string output) )
 {
 	HANDLE h_child_stdout_r = NULL;
 	HANDLE h_child_stdout_w = NULL;
@@ -229,39 +223,37 @@ string utils::launchExe( const std::string &exeName, const std::vector<std::stri
 		msg.append( std::to_string(GetLastError()) );
 		throw dlg_exception(msg.c_str());
 	}
-
-	// Close handles to the child process and its primary thread.
-	// Some applications might keep these handles to monitor the status
-	// of the child process, for example. 
-	CloseHandle(piProcInfo.hProcess);
-	CloseHandle(piProcInfo.hThread);
       
 	// Close handles to the stdin and stdout pipes no longer needed by the child process.
 	// If they are not explicitly closed, there is no way to recognize that the child process has ended.
 	CloseHandle(h_child_stdout_w);
 	CloseHandle(h_child_stdin_r);
 
-	if(!returnOutput)
+	//caller doesn't want the output, i.e. it's just a hit and run so we just return success
+	if(output == NULL)
 	{
-		return "";
+		CloseHandle(piProcInfo.hProcess);
+		CloseHandle(piProcInfo.hThread);
+		return 0;
 	}
 
+	//we read the output of the process
 	const int BUFSIZE = 1024;
 	char buf[BUFSIZE];
 	unsigned long bytesRead = 0;
 	unsigned long totalRead = 0;
 	bSuccess = FALSE;
-	std::vector<char> output;
+	std::vector<char> out;
 
 	while(true)
 	{
-		output.reserve(BUFSIZE);
+		out.reserve(BUFSIZE);
 		bSuccess = ReadFile(h_child_stdout_r, buf, BUFSIZE, &bytesRead, NULL);
 		if(!bSuccess || bytesRead<=0)
 		{
 			break;
 		}
-		output.insert(output.end(), buf, buf+bytesRead);
+		out.insert(out.end(), buf, buf+bytesRead);
 		totalRead += bytesRead;
 		//pass output to callback function
 		//ReadFile returns when it reaches a carriage return
@@ -272,14 +264,28 @@ string utils::launchExe( const std::string &exeName, const std::vector<std::stri
 		}
 	}
 
+	// Process has exited - check its exit code
+	DWORD exitCode;
+	GetExitCodeProcess(piProcInfo.hProcess, &exitCode);
+
+	// Close handles to the child process and its primary thread.
+	// Some applications might keep these handles to monitor the status
+	// of the child process, for example. 
+	CloseHandle(piProcInfo.hProcess);
+	CloseHandle(piProcInfo.hThread);
+
 	if(totalRead<=0)
 	{
-		throw dlg_exception("Failed to read process output");
+		*output = "";
+	}
+	else
+	{
+		*output = string(out.begin(), out.end());
 	}
 
-	PLOG_INFO << "app output be: " << string(output.begin(), output.end());
+	PLOG_INFO << "exe output be: " << *output;
 
-	return string(output.begin(), output.end());
+	return exitCode;
 
 }
 

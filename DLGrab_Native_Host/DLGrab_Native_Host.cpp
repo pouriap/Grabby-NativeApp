@@ -167,7 +167,17 @@ void processMessage(const Json &msg)
 void handleType2(const Json &msg)
 {
 	//TODO: output this directly from flashgot.exe
-	string fgOutput = utils::launchExe("flashgot.exe");
+	vector<string> args;
+	string fgOutput("");
+	DWORD exitCode = utils::launchExe("flashgot.exe", args, &fgOutput);
+
+	if( exitCode != 0 || fgOutput.length() == 0 )
+	{
+		throw dlg_exception("No output from FlashGot.exe");
+	}
+
+	PLOG_INFO << "fg output be: " << fgOutput;
+
 	Json &dmsJSON = utils::parseJSON(fgOutput.c_str());
 	Json res = Json::Parse("{}");
 	res.AddProperty("type", Json("available_dms"));
@@ -273,7 +283,7 @@ void flashGot(const string &jobText)
 
 		vector<string> args;
 		args.push_back(jobFileName);
-		utils::launchExe("FlashGot.exe", args, false);
+		utils::launchExe("FlashGot.exe", args);
 	}
 	catch(exception &e)
 	{
@@ -333,25 +343,26 @@ void ytdl_video_th(const string &url, const string &name, const string &dlHash)
 	try
 	{
 		string safeName = utils::sanitizeFilename(name.c_str());
-		string output = utils::saveDialog(safeName);
+		string savePath = utils::saveDialog(safeName);
 
 		//if it's canceled do nothing
-		if(output.length() == 0)
+		if(savePath.length() == 0)
 		{
 			return;
 		}
 
-		output.append(".%(ext)s");
+		savePath.append(".%(ext)s");
 
 		vector<string> args;
 		args.push_back("--output");
-		args.push_back(output);
+		args.push_back(savePath);
 
-		ytdl(url, args);
+		string output = ytdl(url, args);
+		string type = (output.length() > 0) ? MSGTYP_YTDL_COMP : MSGTYP_YTDL_FAIL;
 
 		Json msg = Json::Parse("{}");
-		msg.AddProperty("type", Json(MSGTYP_YTDL_COMP));
 		msg.AddProperty("dlHash", Json(dlHash));
+		msg.AddProperty("type", Json(type));
 		messaging::sendMessage(msg);
 	}
 	catch(exception &e)
@@ -397,8 +408,16 @@ string ytdl(const string &url, vector<string> args, void (*onOutput)(string outp
 		}
 
 		args.push_back(url);
-		string ytdlOutput = utils::launchExe("ytdl.exe", args, true, onOutput);
-		return ytdlOutput;
+		string output("");
+		DWORD exitCode = utils::launchExe("ytdl.exe", args, &output, onOutput);
+
+		//if our output is empty our callers know something went wrong
+		if(exitCode != 0)
+		{
+			output = "";
+		}
+
+		return output;
 	}
 	catch(exception &e)
 	{
