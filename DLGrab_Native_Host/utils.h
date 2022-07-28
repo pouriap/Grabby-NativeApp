@@ -21,6 +21,9 @@ public:
 	static std::vector<std::string> strSplit(const std::string &str, const char delim);
 	static std::string saveDialog(const std::string &filename);
 	static std::string sanitizeFilename(const char* filename);
+	static std::vector<std::string> getEnvarNames();
+	static bool strHasEnvars(const std::string &str);
+	static std::string strToLower(const std::string &str);
 
 private:
 	static std::string getSpecialPath(REFKNOWNFOLDERID rfid);

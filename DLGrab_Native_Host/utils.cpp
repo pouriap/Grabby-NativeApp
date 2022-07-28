@@ -193,6 +193,7 @@ string utils::launchExe( const std::string &exeName, const std::vector<std::stri
 		cmd.append(" ").append("\"").append(args[i]).append("\"");
 	}
 
+	//some checks
 	if(exeName.length() > MAX_PATH)
 	{
 		throw dlg_exception("Executable file name is too big");
@@ -374,4 +375,73 @@ string utils::sanitizeFilename(const char* filename)
 	}
 
 	return newName;
+}
+
+vector<string> utils::getEnvarNames()
+{
+	vector<string> envars;
+
+	LPWSTR lpszVariable; 
+	LPWCH lpvEnv; 
+
+	// Get a pointer to the environment block. 
+	lpvEnv = GetEnvironmentStrings();
+
+	// If the returned pointer is NULL, exit.
+	if (lpvEnv == NULL)
+	{
+		return envars;
+	}
+
+	// Variable strings are separated by NULL byte, and the block is 
+	// terminated by a NULL byte. 
+	lpszVariable = (LPTSTR) lpvEnv;
+
+	while (*lpszVariable)
+	{
+		string varFull = utf8::narrow(lpszVariable);
+
+		if(varFull.find('=') != 0){
+			//there are some weird variables that start with '=' and we don't want them 
+			//https://devblogs.microsoft.com/oldnewthing/20100506-00/?p=14133
+			//this doesn't seem to be documented anywhere so I'm not sure if all these weird variables start with '='
+			//only time will tell
+			string varName = varFull.substr(0, varFull.find('='));
+			envars.push_back(varName);
+		}
+
+		lpszVariable += lstrlen(lpszVariable) + 1;
+	}
+
+	FreeEnvironmentStrings(lpvEnv);
+
+	return envars;
+}
+
+bool utils::strHasEnvars(const string &str)
+{
+	vector<string> envars = utils::getEnvarNames();
+	string strl = utils::strToLower(str);
+
+	for(int i=0; i<envars.size(); i++)
+	{
+		string var = "%" + utils::strToLower(envars[i]) + "%";
+		if(strl.find(var) != string::npos){
+			return true;
+		}
+	}
+
+	return false;
+}
+
+string utils::strToLower(const string &str)
+{
+	string strl("");
+
+	for(int i=0; i<str.length(); i++)
+	{
+		strl += std::tolower(str[i]);
+	}
+
+	return strl;
 }
