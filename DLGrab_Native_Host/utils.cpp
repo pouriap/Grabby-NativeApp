@@ -330,7 +330,7 @@ string utils::saveDialog(const string &filename)
 	ZeroMemory(&ofn, sizeof(ofn));
 	StringCchCopy(szFileName, MAX_PATH, utf8::widen(filename).c_str());
 
-	ofn.hwndOwner = GetActiveWindow();
+	ofn.hwndOwner = GetForegroundWindow();
 	ofn.lpstrTitle = L"Save As";
 	ofn.lStructSize = sizeof(ofn);
 	ofn.lpstrFile = szFileName;
@@ -351,7 +351,7 @@ string utils::sanitizeFilename(const char* filename)
 
 	const char illegalChars[9] = { '<', '>', ':', '"', '/', '\\', '|', '?', '*' };
 
-	for(int i=0; i < strlen(filename)-1; i++)
+	for(int i=0; i < strlen(filename); i++)
 	{
 		char c = filename[i];
 		bool replace = false;
