@@ -125,7 +125,7 @@ string utils::getDLGTempDir()
 //h_child_stdin_r
 //h_child_stdin_w
 DWORD utils::launchExe( const string &exeName, const vector<string> &args, 
-						string *output, void (*onOutput)(string output) )
+						string *output, void (*onOutput)(const string &output) )
 {
 	HANDLE h_child_stdout_r = NULL;
 	HANDLE h_child_stdout_w = NULL;

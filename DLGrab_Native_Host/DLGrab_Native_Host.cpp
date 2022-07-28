@@ -355,10 +355,11 @@ void ytdl_video_th(const string &url, const string &name, const string &dlHash)
 		savePath.append(".%(ext)s");
 
 		vector<string> args;
+		args.push_back("--newline");
 		args.push_back("--output");
 		args.push_back(savePath);
 
-		string output = ytdl(url, args);
+		string output = ytdl(url, args, onProgress);
 		string type = (output.length() > 0) ? MSGTYP_YTDL_COMP : MSGTYP_YTDL_FAIL;
 
 		Json msg = Json::Parse("{}");
@@ -390,7 +391,7 @@ void ytdl_audio_th(const string &url, const string &name, const string &dlHash)
 	catch(...){} 	//ain't nothing we can do if we're here
 }
 
-string ytdl(const string &url, vector<string> args, void (*onOutput)(string output))
+string ytdl(const string &url, vector<string> args, void (*onOutput)(const string &output))
 {
 	try
 	{
@@ -428,12 +429,14 @@ string ytdl(const string &url, vector<string> args, void (*onOutput)(string outp
 	}
 }
 
-void handleDlProgress(string output)
+void onProgress(const string &output)
 {
 	//output is like \r[download]   2.3% of 1.33MiB at 108.51KiB/s ETA 00:12
-	vector<string> parts = utils::strSplit(output, ' ');
+	//get last line of output, cause output can be multiple lines
+	vector<string> lines = utils::strSplit(output, '\n');
+	vector<string> parts = utils::strSplit(lines.back(), ' ');
 	if(parts.size()>0 && output.find('%')!=string::npos)
 	{
-		messaging::sendMessage(MSGTYP_YTDLPROG, parts[1]);
+		messaging::sendMessageLimit(MSGTYP_YTDLPROG, parts[1], 1);
 	}
 }

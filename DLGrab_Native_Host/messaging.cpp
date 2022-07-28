@@ -11,6 +11,7 @@ using namespace ggicci;
 
 
 std::mutex theMutex;
+std::time_t lastSentTime = 0;
 
 
 messaging::messaging(void)
@@ -76,6 +77,15 @@ void messaging::sendMessage(const string &type, const string &content)
 	sendMessage(json);
 }
 
+void messaging::sendMessageLimit(const string &type, const string &content, int interval)
+{
+	std::time_t t = std::time(nullptr) - lastSentTime;
+	if(t >= interval)
+	{
+		sendMessage(type, content);
+	}
+}
+
 void messaging::sendMessage(const ggicci::Json &msg)
 {
 	sendMessageRaw(msg.ToString());
@@ -84,6 +94,8 @@ void messaging::sendMessage(const ggicci::Json &msg)
 void messaging::sendMessageRaw(string content)
 {
 	std::lock_guard<std::mutex> lock(theMutex);
+
+	lastSentTime = std::time(nullptr);
 
 	utils::strReplaceAll(content, "\r", "\\r");
 	utils::strReplaceAll(content, "\n", "\\n");

@@ -12,6 +12,7 @@ public:
 	~messaging(void);
 	static string get_message();
 	static void sendMessage(const string &type, const string &content);
+	static void sendMessageLimit(const string &type, const string &content, int interval);
 	static void sendMessage(const ggicci::Json &msg);
 	static void sendMessageRaw(string content);
 };
