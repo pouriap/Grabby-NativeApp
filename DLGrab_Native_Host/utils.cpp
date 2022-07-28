@@ -52,7 +52,7 @@ Json utils::parseJSON(const string &JSONstr)
 	}
 }
 
-std::string utils::getTempPath()
+string utils::getTempPath()
 {
 	char str[MAX_PATH];
 	if(GetTempPathA(MAX_PATH, str) > 0)
@@ -90,7 +90,7 @@ bool utils::mkdir(const string &dirName)
 	throw dlg_exception("failed to create temp directory");
 }
 
-bool utils::dirExists(const std::string& dirName_in)
+bool utils::dirExists(const string& dirName_in)
 {
 	DWORD ftyp = GetFileAttributesA(dirName_in.c_str());
 
@@ -102,7 +102,7 @@ bool utils::dirExists(const std::string& dirName_in)
 	return false;
 }
 
-std::string utils::getDLGTempDir()
+string utils::getDLGTempDir()
 {
 	static string DLGTempDir = "";
 	if(DLGTempDir.length() == 0)
@@ -124,8 +124,8 @@ std::string utils::getDLGTempDir()
 //h_child_stdout_w
 //h_child_stdin_r
 //h_child_stdin_w
-DWORD utils::launchExe( const std::string &exeName, const std::vector<std::string> &args, 
-						std::string *output, void (*onOutput)(string output) )
+DWORD utils::launchExe( const string &exeName, const vector<string> &args, 
+						string *output, void (*onOutput)(string output) )
 {
 	HANDLE h_child_stdout_r = NULL;
 	HANDLE h_child_stdout_w = NULL;
@@ -243,7 +243,7 @@ DWORD utils::launchExe( const std::string &exeName, const std::vector<std::strin
 	unsigned long bytesRead = 0;
 	unsigned long totalRead = 0;
 	bSuccess = FALSE;
-	std::vector<char> out;
+	vector<char> out;
 
 	while(true)
 	{
@@ -289,10 +289,10 @@ DWORD utils::launchExe( const std::string &exeName, const std::vector<std::strin
 
 }
 
-void utils::strReplaceAll(std::string &data, const std::string &toSearch, const std::string &replaceStr)
+void utils::strReplaceAll(string &data, const string &toSearch, const string &replaceStr)
 {
 	size_t pos = data.find(toSearch);
-	while(pos != std::string::npos)
+	while(pos != string::npos)
 	{
 		data.replace(pos, toSearch.size(), replaceStr);
 		pos =data.find(toSearch, pos + replaceStr.size());

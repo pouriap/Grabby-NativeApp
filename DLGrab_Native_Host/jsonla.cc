@@ -144,7 +144,7 @@ int Json::Size() const
 	return CAST_JSON_ARR(data_)->size();
 }
 
-vector<std::string> Json::Keys() const
+vector<string> Json::Keys() const
 {
 	vector<string> keys;
 	if (IsObject())
@@ -185,17 +185,17 @@ Json& Json::Push(const Json& rhs)
 	return *this;
 }
 
-Json& Json::AddProperty(const std::string& key, const Json& value)
+Json& Json::AddProperty(const string& key, const Json& value)
 {
-	TRACK("Json& Json::AddProperty(const std::string& key, const Json& value)");
+	TRACK("Json& Json::AddProperty(const string& key, const Json& value)");
 	(*this)[key.c_str()] = value;
 	order_[lastInsertId_++] = key;
 	return *this;
 }
 
-Json& Json::Remove(const std::string& key)
+Json& Json::Remove(const string& key)
 {
-	TRACK("Json& Json::Remove(const std::string& key)");
+	TRACK("Json& Json::Remove(const string& key)");
 	ObjectData& data = Data<ObjectData>();
 	ObjectData::iterator it = data.find(key);
 	if (it != data.end())
