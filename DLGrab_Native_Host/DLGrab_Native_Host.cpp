@@ -202,11 +202,8 @@ void handle_download(const Json &msg)
 	const Json &job = msg["job"];
 	const Json &downloadsInfo = job["downloadsInfo"];
 	string dmName = job["dmName"].AsString();
-	string header("");
 	//length;dmName;0;;
-	string msgstr = msg.ToString();
-	string jobstr = job.ToString();
-	string infostr = downloadsInfo.ToString();
+	string header("");
 	header.append(std::to_string(downloadsInfo.Size()));
 	header.append(";");
 	header.append(dmName);

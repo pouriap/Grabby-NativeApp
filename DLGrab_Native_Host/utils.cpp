@@ -33,6 +33,8 @@ string utils::getSpecialPath(REFKNOWNFOLDERID rfid)
 	}
 
 	string stPath = utf8::narrow(path);
+	//SHGetKnownFolderPath does not include a trailing backslash
+	stPath.append("\\");
 	CoTaskMemFree(path);
 	return stPath;
 }
@@ -62,7 +64,7 @@ string utils::getTempPath()
 	//get appdata\local\temp if above failed
 	else{
 		string appdataLocal = utils::getSpecialPath(FOLDERID_LocalAppData);
-		appdataLocal.append("\\temp");
+		appdataLocal.append("temp\\");
 		return appdataLocal;
 	}	
 }
@@ -72,7 +74,7 @@ string utils::getNewTempFileName()
 	std::time_t t = std::time(nullptr);
 	string time = std::to_string(t);
 	string filename = utils::getDLGTempDir();
-	filename.append("\\job_").append(time).append(".fgt");
+	filename.append("job_").append(time).append(".fgt");
 	return filename;
 }
 
@@ -108,7 +110,7 @@ string utils::getDLGTempDir()
 	if(DLGTempDir.length() == 0)
 	{
 		string tempPath = utils::getTempPath();
-		DLGTempDir.append(tempPath).append("\\").append(DLG_ADDON_ID);
+		DLGTempDir.append(tempPath).append(DLG_ADDON_ID);
 	}
 	return DLGTempDir;
 }

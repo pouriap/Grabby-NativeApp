@@ -1,5 +1,7 @@
 #pragma once
 
+using namespace std;
+
 class fatal_exception : public std::exception
 {
     private:
