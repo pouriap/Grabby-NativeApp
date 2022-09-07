@@ -244,10 +244,9 @@ void handle_download(const Json &msg)
 
 void handle_ytdlinfo(const Json &msg)
 {
-	string pageUrl = msg["page_url"].AsString();
-	string manifestUrl = msg["manifest_url"].AsString();
-	string dlHash = msg["dlHash"].AsString();
-	std::thread th1(ytdl_info_th, pageUrl, manifestUrl, dlHash);
+	string pageUrl = msg["url"].AsString();
+	int tabId = msg["tabId"].AsInt();
+	std::thread th1(ytdl_info_th, pageUrl, tabId);
 	th1.detach();
 }
 
@@ -291,13 +290,13 @@ void flashGot(const string &jobText)
 	}
 }
 
-void ytdl_info_th(const string &pageurl, const string &manifestUrl, const string &dlHash)
+void ytdl_info_th(const string &url, const int tabId)
 {
 	try
 	{
 		vector<string> args;
 		args.push_back("-j");
-		string ytdlOutput = ytdl(pageurl, args);
+		string ytdlOutput = ytdl(url, args);
 
 		Json info;
 		bool isFromManifest = false;
@@ -310,27 +309,14 @@ void ytdl_info_th(const string &pageurl, const string &manifestUrl, const string
 		{
 			//YTDL output not JSON
 			//Happens when YTDL outputs an error
-			//Let's try with the manifest itself
-			ytdlOutput = ytdl(manifestUrl, args);
-			try
-			{
-				info = utils::parseJSON(ytdlOutput.c_str());
-				isFromManifest = true;
-			}
-			catch(...)
-			{
-				//Must be some shit if even this one fails
-				info = Json(ytdlOutput);
-			}
+			info = Json(ytdlOutput);
 		}
 
 		Json msg = Json::Parse("{}");
 		msg.AddProperty("type", Json(MSGTYP_YTDL_INFO));
-		msg.AddProperty("dlHash", Json(dlHash));
+		msg.AddProperty("tabId", Json(tabId));
 		msg.AddProperty("info", info);
-		if(isFromManifest){
-			msg.AddProperty("is_from_manifest", Json(isFromManifest));
-		}
+
 		messaging::sendMessage(msg);
 	}
 	catch(...){} 	//ain't nothing we can do if we're here

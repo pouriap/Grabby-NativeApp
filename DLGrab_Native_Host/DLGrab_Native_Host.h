@@ -16,7 +16,7 @@ void handle_ytdlinfo(const Json &msg);
 void handle_ytdlvid(const Json &msg);
 void handle_ytdlaud(const Json &msg);
 void flashGot(const string &jobText);
-void ytdl_info_th(const string &pageUrl, const string &manifestUrl, const string &dlHash);
+void ytdl_info_th(const string &url, const int tabId);
 void ytdl_video_th(const string &url, const string &name, const string &dlHash);
 void ytdl_audio_th(const string &url, const string &name, const string &dlHash);
 string ytdl(const string &url, vector<string> args, output_callback *callback = NULL);
