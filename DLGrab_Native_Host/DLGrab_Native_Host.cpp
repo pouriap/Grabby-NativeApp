@@ -309,7 +309,8 @@ void ytdl_info_th(const string &url, const int tabId)
 		{
 			//YTDL output not JSON
 			//Happens when YTDL outputs an error
-			info = Json(ytdlOutput);
+			info = Json("YouTubeDL returned an error. Consult the native app log for more info");
+			PLOG_ERROR << "YouTubeDL returned an error" << ytdlOutput;
 		}
 
 		Json msg = Json::Parse("{}");
@@ -394,7 +395,10 @@ string ytdl(const string &url, vector<string> args, output_callback *callback)
 			throw dlg_exception("This URL is not supported");
 		}
 
+		args.push_back("--quiet");
+		args.push_back("--no-warnings");
 		args.push_back(url);
+
 		string output("");
 		DWORD exitCode = utils::launchExe("ytdl.exe", args, &output, callback);
 
