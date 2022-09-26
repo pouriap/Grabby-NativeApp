@@ -87,7 +87,6 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="config.h" />
     <ClInclude Include="defines.h" />
     <ClInclude Include="grabby_native_app.h" />
     <ClInclude Include="exceptions.h" />
@@ -101,7 +100,6 @@
     <ClInclude Include="utils.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="config.cpp" />
     <ClCompile Include="grabby_native_app.cpp" />
     <ClCompile Include="exceptions.cpp" />
     <ClCompile Include="jsonla.cc" />

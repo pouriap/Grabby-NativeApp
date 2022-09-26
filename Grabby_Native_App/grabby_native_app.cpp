@@ -24,7 +24,6 @@
 #include "messaging.h"
 #include "exceptions.h"
 #include "defines.h"
-#include "config.h"
 
 using namespace std;
 using namespace ggicci;
@@ -243,7 +242,7 @@ void handle_ytdlinfo(const Json &msg)
 {
 	string pageUrl = msg["url"].AsString();
 	string dlHash = msg["dlHash"].AsString();
-	std::thread th1(ytdl_info_th, pageUrl, dlHash);
+	std::thread th1(ytdl_info_th, pageUrl, dlHash, msg);
 	th1.detach();
 }
 
@@ -278,13 +277,13 @@ void flashGot(const string &jobText)
 	}
 }
 
-void ytdl_info_th(const string &url, const string &dlHash)
+void ytdl_info_th(const string &url, const string &dlHash, const Json &msg)
 {
 	try
 	{
 		vector<string> args;
 		args.push_back("-j");
-		string ytdlOutput = ytdl(url, args);
+		string ytdlOutput = ytdl(url, args, msg);
 
 		Json info;
 		bool isFromManifest = false;
@@ -360,7 +359,7 @@ void ytdl_get_th(const string &url, const string &fileName, const string &dlHash
 		}
 
 		output_callback callback(dlHash);
-		string output = ytdl(url, args, &callback);
+		string output = ytdl(url, args, msg, &callback);
 
 		string type = (output.length() > 0) ? MSGTYP_YTDL_COMP : MSGTYP_YTDL_FAIL;
 
@@ -383,7 +382,7 @@ vector<string> ytdl_get_args(const Json &msg)
 
 }
 
-string ytdl(const string &url, vector<string> args, output_callback *callback)
+string ytdl(const string &url, vector<string> args, const Json &msg, output_callback *callback)
 {
 	try
 	{
@@ -404,10 +403,10 @@ string ytdl(const string &url, vector<string> args, output_callback *callback)
 		args.push_back("--no-warnings");
 		args.push_back(url);
 
-		if(config::YTDL_PROXY.length)
+		if(msg.Contains("proxy"))
 		{
 			args.push_back("--proxy");
-			args.push_back(config::YTDL_PROXY);
+			args.push_back(msg["proxy"].AsString());
 		}
 
 		string output("");
