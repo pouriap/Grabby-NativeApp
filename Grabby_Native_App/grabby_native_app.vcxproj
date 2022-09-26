@@ -87,18 +87,21 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="config.h" />
     <ClInclude Include="defines.h" />
     <ClInclude Include="grabby_native_app.h" />
     <ClInclude Include="exceptions.h" />
     <ClInclude Include="jsonla.h" />
     <ClInclude Include="messaging.h" />
     <ClInclude Include="output_callback.h" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="utf8.h" />
     <ClInclude Include="utils.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="config.cpp" />
     <ClCompile Include="grabby_native_app.cpp" />
     <ClCompile Include="exceptions.cpp" />
     <ClCompile Include="jsonla.cc" />
@@ -110,6 +113,9 @@
     </ClCompile>
     <ClCompile Include="utf8.cpp" />
     <ClCompile Include="utils.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Grabby Native App.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

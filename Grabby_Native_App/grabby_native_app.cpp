@@ -24,6 +24,7 @@
 #include "messaging.h"
 #include "exceptions.h"
 #include "defines.h"
+#include "config.h"
 
 using namespace std;
 using namespace ggicci;
@@ -402,6 +403,12 @@ string ytdl(const string &url, vector<string> args, output_callback *callback)
 
 		args.push_back("--no-warnings");
 		args.push_back(url);
+
+		if(config::YTDL_PROXY.length)
+		{
+			args.push_back("--proxy");
+			args.push_back(config::YTDL_PROXY);
+		}
 
 		string output("");
 		DWORD exitCode = utils::launchExe("ytdl.exe", args, &output, callback);
