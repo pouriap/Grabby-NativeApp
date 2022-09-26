@@ -13,13 +13,13 @@ class fatal_exception : public std::exception
     const char* what() const throw();
 };
 
-class dlg_exception : public std::exception
+class grb_exception : public std::exception
 {
     private:
     string message;
 
     public:
-    dlg_exception(const char * msg);
-	~dlg_exception(void);
+    grb_exception(const char * msg);
+	~grb_exception(void);
     const char* what() const throw();
 };

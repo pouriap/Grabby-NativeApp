@@ -29,7 +29,7 @@ string utils::getSpecialPath(REFKNOWNFOLDERID rfid)
 	PWSTR path;
 	if(SHGetKnownFolderPath(rfid, 0, NULL, &path) != S_OK)
 	{
-		throw dlg_exception("failed to get special path");
+		throw grb_exception("failed to get special path");
 	}
 
 	string stPath = utf8::narrow(path);
@@ -50,7 +50,7 @@ Json utils::parseJSON(const string &JSONstr)
 	{
 		string msg = "Error parsing JSON: ";
 		msg.append(e.what());
-		throw dlg_exception(msg.c_str());
+		throw grb_exception(msg.c_str());
 	}
 }
 
@@ -73,7 +73,7 @@ string utils::getNewTempFileName()
 {
 	std::time_t t = std::time(nullptr);
 	string time = std::to_string(t);
-	string filename = utils::getDLGTempDir();
+	string filename = utils::getGRBTempDir();
 	filename.append("job_").append(time).append(".fgt");
 	return filename;
 }
@@ -89,7 +89,7 @@ bool utils::mkdir(const string &dirName)
 		return true;
 	}
 
-	throw dlg_exception("failed to create temp directory");
+	throw grb_exception("failed to create temp directory");
 }
 
 bool utils::dirExists(const string& dirName_in)
@@ -104,15 +104,15 @@ bool utils::dirExists(const string& dirName_in)
 	return false;
 }
 
-string utils::getDLGTempDir()
+string utils::getGRBTempDir()
 {
-	static string DLGTempDir = "";
-	if(DLGTempDir.length() == 0)
+	static string GRBTempDir = "";
+	if(GRBTempDir.length() == 0)
 	{
 		string tempPath = utils::getTempPath();
-		DLGTempDir.append(tempPath).append(DLG_ADDON_ID);
+		GRBTempDir.append(tempPath).append(GRB_ADDON_ID);
 	}
-	return DLGTempDir;
+	return GRBTempDir;
 }
 
 // a pipe has two ends, a read handle and a write handle
@@ -155,7 +155,7 @@ DWORD utils::launchExe(const string &exeName, const vector<string> &args, string
 
 	if(!bSuccess)
 	{
-		throw dlg_exception("Failed to create child process handles");
+		throw grb_exception("Failed to create child process handles");
 	}
 
 	PROCESS_INFORMATION piProcInfo; 
@@ -191,12 +191,12 @@ DWORD utils::launchExe(const string &exeName, const vector<string> &args, string
 	//some checks
 	if(exeName.length() > MAX_PATH)
 	{
-		throw dlg_exception("Executable file name is too big");
+		throw grb_exception("Executable file name is too big");
 	}
 
 	if(cmd.length() > CMD_MAX_LEN)
 	{
-		throw dlg_exception("Command line too big");
+		throw grb_exception("Command line too big");
 	}
 
 	PLOG_INFO << "exe name: " << exeName << " - cmd: " << cmd;
@@ -222,7 +222,7 @@ DWORD utils::launchExe(const string &exeName, const vector<string> &args, string
 	{
 		string msg = "Create process failed with error code ";
 		msg.append( std::to_string(GetLastError()) );
-		throw dlg_exception(msg.c_str());
+		throw grb_exception(msg.c_str());
 	}
       
 	// Close handles to the stdin and stdout pipes no longer needed by the child process.

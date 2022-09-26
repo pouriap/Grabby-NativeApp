@@ -17,13 +17,13 @@ const char* fatal_exception::what() const throw()
 
 
 
-dlg_exception::dlg_exception(const char* msg) : message(msg)
+grb_exception::grb_exception(const char* msg) : message(msg)
 {
 }
-dlg_exception::~dlg_exception(void)
+grb_exception::~grb_exception(void)
 {
 }
-const char* dlg_exception::what() const throw()
+const char* grb_exception::what() const throw()
 {
 	return message.c_str();
 }

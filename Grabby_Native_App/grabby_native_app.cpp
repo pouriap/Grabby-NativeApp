@@ -19,7 +19,7 @@
 #include <fcntl.h>
 #include <io.h>
 #include <thread>
-#include "DLGrab_Native_Host.h"
+#include "grabby_native_app.h"
 #include "utils.h"
 #include "messaging.h"
 #include "exceptions.h"
@@ -110,9 +110,9 @@ string setupTmpDir()
 {
 	try
 	{
-		string DLGTempDir = utils::getDLGTempDir();
-		utils::mkdir(DLGTempDir);
-		return DLGTempDir;
+		string GRBTempDir = utils::getGRBTempDir();
+		utils::mkdir(GRBTempDir);
+		return GRBTempDir;
 	}
 	catch(...)
 	{
@@ -139,20 +139,16 @@ void processMessage(const Json &msg)
 		{
 			handle_ytdlinfo(msg);
 		}
-		else if(type == MSGTYP_YTDL_VID)
+		else if(type == MSGTYP_YTDL_GET)
 		{
-			handle_ytdlvid(msg);
-		}
-		else if(type == MSGTYP_YTDL_AUD)
-		{
-			handle_ytdlaud(msg);
+			handle_ytdlget(msg);
 		}
 		else
 		{
 			messaging::sendMessage(MSGTYP_UNSUPP, "Unsupported message type");
 		}
 	}
-	catch(dlg_exception &e)
+	catch(grb_exception &e)
 	{
 		throw e;
 	}
@@ -160,7 +156,7 @@ void processMessage(const Json &msg)
 	{
 		string msg = "Error in processing message: ";
 		msg.append(e.what());
-		throw dlg_exception(msg.c_str());
+		throw grb_exception(msg.c_str());
 	}
 }
 
@@ -174,7 +170,7 @@ void handle_getavail(const Json &msg)
 
 	if( exitCode != 0 || fgOutput.length() == 0 )
 	{
-		throw dlg_exception("No output from FlashGot.exe");
+		throw grb_exception("No output from FlashGot.exe");
 	}
 
 	PLOG_INFO << "fg output be: " << fgOutput;
@@ -245,26 +241,17 @@ void handle_download(const Json &msg)
 void handle_ytdlinfo(const Json &msg)
 {
 	string pageUrl = msg["url"].AsString();
-	int tabId = msg["tabId"].AsInt();
-	std::thread th1(ytdl_info_th, pageUrl, tabId);
+	string dlHash = msg["dlHash"].AsString();
+	std::thread th1(ytdl_info_th, pageUrl, dlHash);
 	th1.detach();
 }
 
-void handle_ytdlvid(const Json &msg)
+void handle_ytdlget(const Json &msg)
 {
 	string url = msg["url"].AsString();
-	string name = msg["name"].AsString();
+	string name = msg["filename"].AsString();
 	string dlHash = msg["dlHash"].AsString();
-	std::thread th1(ytdl_video_th, url, name, dlHash);
-	th1.detach();
-}
-
-void handle_ytdlaud(const Json &msg)
-{
-	string url = msg["url"].AsString();
-	string name = msg["name"].AsString();
-	string dlHash = msg["dlHash"].AsString();
-	std::thread th1(ytdl_audio_th, url, name, dlHash);
+	std::thread th1(ytdl_get_th, url, name, dlHash, msg);
 	th1.detach();
 }
 
@@ -286,11 +273,11 @@ void flashGot(const string &jobText)
 	{
 		string msg = "Error in FlashGot execution: ";
 		msg.append(e.what());
-		throw dlg_exception(msg.c_str());
+		throw grb_exception(msg.c_str());
 	}
 }
 
-void ytdl_info_th(const string &url, const int tabId)
+void ytdl_info_th(const string &url, const string &dlHash)
 {
 	try
 	{
@@ -304,6 +291,16 @@ void ytdl_info_th(const string &url, const int tabId)
 		try
 		{
 			info = utils::parseJSON(ytdlOutput.c_str());
+			//remove big unused things from info to avoid JSON getting to big for native messaging
+			if(info.Contains("thumbnails")){
+				info.Remove("thumbnails");
+			}
+			if(info.Contains("automatic_captions")){
+				info.Remove("automatic_captions");
+			}
+			if(info.Contains("subtitles")){
+				info.Remove("subtitles");
+			}
 		}
 		catch(...)
 		{
@@ -315,7 +312,7 @@ void ytdl_info_th(const string &url, const int tabId)
 
 		Json msg = Json::Parse("{}");
 		msg.AddProperty("type", Json(MSGTYP_YTDL_INFO));
-		msg.AddProperty("tabId", Json(tabId));
+		msg.AddProperty("dlHash", Json(dlHash));
 		msg.AddProperty("info", info);
 
 		messaging::sendMessage(msg);
@@ -323,11 +320,11 @@ void ytdl_info_th(const string &url, const int tabId)
 	catch(...){} 	//ain't nothing we can do if we're here
 }
 
-void ytdl_video_th(const string &url, const string &name, const string &dlHash)
+void ytdl_get_th(const string &url, const string &fileName, const string &dlHash, const Json &msg)
 {
 	try
 	{
-		string safeName = utils::sanitizeFilename(name.c_str());
+		string safeName = utils::sanitizeFilename(fileName.c_str());
 		string savePath = utils::saveDialog(safeName);
 
 		//if it's canceled do nothing
@@ -342,6 +339,24 @@ void ytdl_video_th(const string &url, const string &name, const string &dlHash)
 		args.push_back("--newline");
 		args.push_back("--output");
 		args.push_back(savePath);
+
+		if(msg.Contains("formatId"))
+		{
+			args.push_back("-f");
+
+			string format = msg["formatId"].AsString() + "+bestaudio";
+
+			args.push_back(format);
+			args.push_back("--merge-output-format");
+			args.push_back("mkv");
+		}
+
+		if(msg.Contains("audioOnly"))
+		{
+			args.push_back("-x");
+			args.push_back("--audio-format");
+			args.push_back("mp3");
+		}
 
 		output_callback callback(dlHash);
 		string output = ytdl(url, args, &callback);
@@ -362,19 +377,9 @@ void ytdl_video_th(const string &url, const string &name, const string &dlHash)
 	catch(...){} 	//ain't nothing we can do if we're here
 }
 
-void ytdl_audio_th(const string &url, const string &name, const string &dlHash)
+vector<string> ytdl_get_args(const Json &msg)
 {
-	try
-	{
-		//TODO
-	}
-	catch(exception &e)
-	{
-		string msg = "Error downloading audio: ";
-		msg.append(e.what());
-		messaging::sendMessage(MSGTYP_ERR, msg);
-	}
-	catch(...){} 	//ain't nothing we can do if we're here
+
 }
 
 string ytdl(const string &url, vector<string> args, output_callback *callback)
@@ -392,10 +397,9 @@ string ytdl(const string &url, vector<string> args, output_callback *callback)
 		//so we search the URL and if we find any env. variables in it we just reject it
 		if(utils::strHasEnvars(url))
 		{
-			throw dlg_exception("This URL is not supported");
+			throw grb_exception("This URL is not supported");
 		}
 
-		args.push_back("--quiet");
 		args.push_back("--no-warnings");
 		args.push_back(url);
 
@@ -414,6 +418,6 @@ string ytdl(const string &url, vector<string> args, output_callback *callback)
 	{
 		string msg = "Error in YoutubeDL execution: ";
 		msg.append(e.what());
-		throw dlg_exception(msg.c_str());
+		throw grb_exception(msg.c_str());
 	}
 }

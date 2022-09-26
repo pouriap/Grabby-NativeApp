@@ -35,7 +35,7 @@ string messaging::get_message()
 
 		if(bytes_read != 4 || message_length <=0)
 		{
-			throw dlg_exception("bad message length");
+			throw grb_exception("bad message length");
 		}
 	}
 	catch(exception &e)
@@ -55,7 +55,7 @@ string messaging::get_message()
 
 		if(bytes_read != message_length)
 		{
-			throw dlg_exception("Read bytes doesn't match message length");
+			throw grb_exception("Read bytes doesn't match message length");
 		}
 
 		return m;
@@ -64,7 +64,7 @@ string messaging::get_message()
 	{
 		string msg = "Error reading raw message: ";
 		msg.append(e.what());
-		throw dlg_exception(msg.c_str());
+		throw grb_exception(msg.c_str());
 	}
 
 }
@@ -113,7 +113,7 @@ void messaging::sendMessageRaw(string content)
 	{
 		string msg = "Failed to send message: ";
 		msg.append(e.what());
-		throw dlg_exception(msg.c_str());
+		throw grb_exception(msg.c_str());
 	}
 
 }

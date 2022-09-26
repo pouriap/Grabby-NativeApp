@@ -3,7 +3,7 @@
 //TODO: make types integer?
 
 //general defines
-#define DLG_ADDON_ID "download.grab.pouriap"
+#define GRB_ADDON_ID "grabby.pouriap"
 #define CMD_MAX_LEN 4096
 
 //message types
@@ -11,8 +11,7 @@
 #define MSGTYP_AVAIL_DMS "available_dms"
 #define MSGTYP_DOWNLOAD "download"
 #define MSGTYP_YTDL_INFO "ytdl_getinfo"
-#define MSGTYP_YTDL_AUD "ytdl_download_audio"
-#define MSGTYP_YTDL_VID "ytdl_download_video"
+#define MSGTYP_YTDL_GET "ytdl_get"
 #define MSGTYP_YTDLPROG "app_download_progress"
 #define MSGTYP_ERR "app_error"
 #define MSGTYP_MSG "app_message"

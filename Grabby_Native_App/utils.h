@@ -16,7 +16,7 @@ public:
 	static ggicci::Json parseJSON(const string &JSONstr);
 	static string getNewTempFileName();
 	static bool mkdir(const string &dirName);
-	static string getDLGTempDir();
+	static string getGRBTempDir();
 	static DWORD launchExe(const string &exeName, const vector<string> &args, 
 		string *output = NULL, output_callback *callback = NULL );
 	static void strReplaceAll(string &data, const string &toSearch, const string &replaceStr);
