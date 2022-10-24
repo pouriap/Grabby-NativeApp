@@ -342,11 +342,14 @@ void ytdl_get_th(const string &url, const string &fileName, const string &dlHash
 
 		if(msg.Contains("formatId"))
 		{
+			string format = msg["formatId"].AsString();
+
+			//we need +bestaudio for cases where the audio is separate(youtube)
+			//if such format is not found then the normal format will be downloaded
+			string formatFull = format + "+bestaudio/" + format;
+
 			args.push_back("-f");
-
-			string format = msg["formatId"].AsString() + "+bestaudio";
-
-			args.push_back(format);
+			args.push_back(formatFull);
 			args.push_back("--merge-output-format");
 			args.push_back("mkv");
 		}
