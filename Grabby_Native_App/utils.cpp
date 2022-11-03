@@ -3,6 +3,7 @@
 #include "utils.h"
 #include "utf8.h"
 #include "fileapi.h"
+#include <aclapi.h>
 #include <ctime>
 #include <strsafe.h>
 #include <mutex>
@@ -230,14 +231,6 @@ DWORD utils::launchExe(const string &exeName, const vector<string> &args, string
 	CloseHandle(h_child_stdout_w);
 	CloseHandle(h_child_stdin_r);
 
-	//caller doesn't want the output, i.e. it's just a hit and run so we just return success
-	if(output == NULL)
-	{
-		CloseHandle(piProcInfo.hProcess);
-		CloseHandle(piProcInfo.hThread);
-		return 0;
-	}
-
 	//we read the output of the process
 	const int BUFSIZE = 1024;
 	char buf[BUFSIZE];
@@ -266,8 +259,10 @@ DWORD utils::launchExe(const string &exeName, const vector<string> &args, string
 	}
 
 	// Process has exited - check its exit code
+	WaitForSingleObject(piProcInfo.hProcess, 1000);
 	DWORD exitCode;
 	GetExitCodeProcess(piProcInfo.hProcess, &exitCode);
+	PLOG_INFO << "process exit code is " << exitCode;
 
 	// Close handles to the child process and its primary thread.
 	// Some applications might keep these handles to monitor the status

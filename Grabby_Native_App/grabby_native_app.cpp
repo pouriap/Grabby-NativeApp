@@ -233,11 +233,12 @@ void flashGot(const string &jobB64)
 	{
 		vector<string> args;
 		args.push_back(jobB64);
-		DWORD exitCode = utils::launchExe("grabby_flashgot.exe", args);
+		string output("");
+		DWORD exitCode = utils::launchExe("grabby_flashgot.exe", args, &output);
 		if(exitCode != 0)
 		{
-			string err = "Exit code: " + exitCode;
-			throw err.c_str();
+			string msg = output + " - exit code: " + std::to_string(exitCode);
+			throw grb_exception(msg.c_str());
 		}
 	}
 	catch(exception &e)
