@@ -24,10 +24,11 @@
 #include "messaging.h"
 #include "exceptions.h"
 #include "defines.h"
+#include "base64.hpp"
 
 using namespace std;
 using namespace ggicci;
-
+using namespace base64;
 
 int wmain(int argc, WCHAR *argv[], WCHAR *envp[])
 {
@@ -166,11 +167,11 @@ void handle_getavail(const Json &msg)
 	//TODO: output this directly from flashgot.exe
 	vector<string> args;
 	string fgOutput("");
-	DWORD exitCode = utils::launchExe("flashgot.exe", args, &fgOutput);
+	DWORD exitCode = utils::launchExe("grabby_flashgot.exe", args, &fgOutput);
 
 	if( exitCode != 0 || fgOutput.length() == 0 )
 	{
-		throw grb_exception("No output from FlashGot.exe");
+		throw grb_exception("No output from grabby_flashgot.exe");
 	}
 
 	PLOG_INFO << "fg output be: " << fgOutput;
@@ -191,51 +192,21 @@ void handle_getavail(const Json &msg)
 	messaging::sendMessage(res);
 }
 
-//TODO: make FlashGot directly accept the JSON as job file instead of this 
 //handles "download" request
 void handle_download(const Json &msg)
 {
-	const Json &job = msg["job"];
-	const Json &downloadsInfo = job["downloadsInfo"];
-	string dmName = job["dmName"].AsString();
-	//length;dmName;0;;
-	string header("");
-	header.append(std::to_string(downloadsInfo.Size()));
-	header.append(";");
-	header.append(dmName);
-	header.append(";0;;");
-
-	string jobText = header;
-	jobText.append("\n");
-	jobText.append(job["referer"].AsString());
-	jobText.append("\n");
-
-	for(int i=0; i<downloadsInfo.Size(); i++)
+	try
 	{
-		jobText.append(downloadsInfo[i]["url"].AsString());
-		jobText.append("\n");
-		jobText.append(downloadsInfo[i]["desc"].AsString());
-		jobText.append("\n");
-		jobText.append(downloadsInfo[i]["cookies"].AsString());
-		jobText.append("\n");
-		jobText.append(downloadsInfo[i]["postData"].AsString());
-		jobText.append("\n");
-		jobText.append(downloadsInfo[i]["filename"].AsString());
-		jobText.append("\n");
-		jobText.append(downloadsInfo[i]["extension"].AsString());
-		jobText.append("\n");
+		const Json &job = msg["job"];
+		string jobJSON = job.ToString();
+		string jobB64 = to_base64(jobJSON);
+		flashGot(jobB64);
 	}
-
-	jobText.append(job["originPageReferer"].AsString());
-	jobText.append("\n");
-	jobText.append(job["originPageCookies"].AsString());
-	jobText.append("\n");
-	jobText.append("\n");
-	jobText.append("\n");
-	jobText.append(job["useragent"].AsString());
-	jobText.append("\n");
-
-	flashGot(jobText);
+	catch(grb_exception &e)
+	{
+		messaging::sendMessage(MSGTYP_ERR, e.what());
+		PLOG_ERROR << e.what();
+	}
 }
 
 void handle_ytdlinfo(const Json &msg)
@@ -256,18 +227,18 @@ void handle_ytdlget(const Json &msg)
 }
 
 //launches FlashGot to perform a download with a DM
-void flashGot(const string &jobText)
+void flashGot(const string &jobB64)
 {
 	try
 	{
-		string jobFileName = utils::getNewTempFileName();
-		std::ofstream jobFile(jobFileName);
-		jobFile << jobText;
-		jobFile.close();
-
 		vector<string> args;
-		args.push_back(jobFileName);
-		utils::launchExe("FlashGot.exe", args);
+		args.push_back(jobB64);
+		DWORD exitCode = utils::launchExe("grabby_flashgot.exe", args);
+		if(exitCode != 0)
+		{
+			string err = "Exit code: " + exitCode;
+			throw err.c_str();
+		}
 	}
 	catch(exception &e)
 	{
@@ -413,7 +384,7 @@ string ytdl(const string &url, vector<string> args, const Json &msg, output_call
 		}
 
 		string output("");
-		DWORD exitCode = utils::launchExe("ytdl.exe", args, &output, callback);
+		DWORD exitCode = utils::launchExe("yt-dlp.exe", args, &output, callback);
 
 		//if our output is empty our callers know something went wrong
 		if(exitCode != 0)

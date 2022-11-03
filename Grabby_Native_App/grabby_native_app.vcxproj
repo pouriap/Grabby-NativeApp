@@ -87,6 +87,7 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="base64.hpp" />
     <ClInclude Include="defines.h" />
     <ClInclude Include="grabby_native_app.h" />
     <ClInclude Include="exceptions.h" />
