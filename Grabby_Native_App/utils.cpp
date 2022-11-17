@@ -127,7 +127,8 @@ string utils::getGRBTempDir()
 //h_child_stdout_w
 //h_child_stdin_r
 //h_child_stdin_w
-DWORD utils::launchExe(const string &exeName, const vector<string> &args, string *output, output_callback *callback)
+DWORD utils::launchExe(const string &exeName, const vector<string> &args, string *output, 
+					   const string &input, output_callback *callback)
 {
 	HANDLE h_child_stdout_r = NULL;
 	HANDLE h_child_stdout_w = NULL;
@@ -230,6 +231,19 @@ DWORD utils::launchExe(const string &exeName, const vector<string> &args, string
 	// If they are not explicitly closed, there is no way to recognize that the child process has ended.
 	CloseHandle(h_child_stdout_w);
 	CloseHandle(h_child_stdin_r);
+
+	//write the input to the STDIN of the launched process
+	if(input.length() > 0)
+	{
+		DWORD dwWritten;
+		DWORD dataLen = input.length();
+		bSuccess = WriteFile(h_child_stdin_w, input.c_str(), dataLen, &dwWritten, NULL);
+		if(!bSuccess || dwWritten!=dataLen){
+			PLOG_ERROR << "stdin write failed: " << GetLastError();
+		}
+	}
+	//close the handle so that the reading end of the pipe will get out of the fread() loop
+	CloseHandle(h_child_stdin_w);
 
 	//we read the output of the process
 	const int BUFSIZE = 1024;

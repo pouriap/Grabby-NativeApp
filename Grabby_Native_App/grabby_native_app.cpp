@@ -199,8 +199,7 @@ void handle_download(const Json &msg)
 	{
 		const Json &job = msg["job"];
 		string jobJSON = job.ToString();
-		string jobB64 = to_base64(jobJSON);
-		flashGot(jobB64);
+		flashGot(jobJSON);
 	}
 	catch(grb_exception &e)
 	{
@@ -227,14 +226,14 @@ void handle_ytdlget(const Json &msg)
 }
 
 //launches FlashGot to perform a download with a DM
-void flashGot(const string &jobB64)
+void flashGot(const string &jobJSON)
 {
 	try
 	{
 		vector<string> args;
-		args.push_back(jobB64);
+		args.push_back("download");
 		string output("");
-		DWORD exitCode = utils::launchExe("grabby_flashgot.exe", args, &output);
+		DWORD exitCode = utils::launchExe("grabby_flashgot.exe", args, &output, jobJSON);
 		if(exitCode != 0)
 		{
 			string msg = output + " - exit code: " + std::to_string(exitCode);
@@ -385,7 +384,7 @@ string ytdl(const string &url, vector<string> args, const Json &msg, output_call
 		}
 
 		string output("");
-		DWORD exitCode = utils::launchExe("yt-dlp.exe", args, &output, callback);
+		DWORD exitCode = utils::launchExe("yt-dlp.exe", args, &output, "", callback);
 
 		//if our output is empty our callers know something went wrong
 		if(exitCode != 0)
