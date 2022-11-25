@@ -254,23 +254,43 @@ void ytdl_info_th(const string &url, const string &dlHash, const Json &msg)
 	{
 		vector<string> args;
 		args.push_back("-j");
+		//if it's a playlist, flatten it (do not extract info for individual videos)
+		args.push_back("--flat-playlist");
 		string ytdlOutput = ytdl(url, args, msg);
 
+		vector<string> lines = utils::strSplit(ytdlOutput, '\n');
+
 		Json info;
-		bool isFromManifest = false;
+		string type = MSGTYP_YTDL_INFO;
 
 		try
 		{
-			info = utils::parseJSON(ytdlOutput.c_str());
-			//remove big unused things from info to avoid JSON getting to big for native messaging
-			if(info.Contains("thumbnails")){
-				info.Remove("thumbnails");
+			if(lines.size() > 1)
+			{
+				type = MSGTYP_YTDL_INFO_YTPL;
+				info = Json::Parse("[]");
+
+				//we have a for loop because playlists are outputted as one line of JSON for each list item
+				for(int i=0; i<lines.size(); i++)
+				{
+					Json j = utils::parseJSON(lines[i].c_str());
+					info.Push(j);
+				}
 			}
-			if(info.Contains("automatic_captions")){
-				info.Remove("automatic_captions");
-			}
-			if(info.Contains("subtitles")){
-				info.Remove("subtitles");
+			else
+			{
+				info = utils::parseJSON(lines[0]);
+
+				//remove big unused things from info to avoid JSON getting to big for native messaging
+				if(info.Contains("thumbnails")){
+					info.Remove("thumbnails");
+				}
+				if(info.Contains("automatic_captions")){
+					info.Remove("automatic_captions");
+				}
+				if(info.Contains("subtitles")){
+					info.Remove("subtitles");
+				}
 			}
 		}
 		catch(...)
@@ -282,7 +302,7 @@ void ytdl_info_th(const string &url, const string &dlHash, const Json &msg)
 		}
 
 		Json msg = Json::Parse("{}");
-		msg.AddProperty("type", Json(MSGTYP_YTDL_INFO));
+		msg.AddProperty("type", Json(type));
 		msg.AddProperty("dlHash", Json(dlHash));
 		msg.AddProperty("info", info);
 

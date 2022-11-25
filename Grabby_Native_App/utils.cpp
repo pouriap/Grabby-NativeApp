@@ -321,8 +321,7 @@ vector<string> utils::strSplit(const string &str, const char delim)
 
 	while(getline(stream, temp, delim))
 	{
-		if(temp.size()>0)
-			parts.push_back(temp);
+		if(temp.size() > 0) parts.push_back(temp);
 	}
 
 	return parts;
