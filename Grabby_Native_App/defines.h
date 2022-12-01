@@ -10,12 +10,14 @@
 #define MSGTYP_GET_AVAIL_DMS "get_available_dms"
 #define MSGTYP_AVAIL_DMS "available_dms"
 #define MSGTYP_DOWNLOAD "download"
+
 #define MSGTYP_YTDL_INFO "ytdl_info"
 #define MSGTYP_YTDL_INFO_YTPL "ytdl_info_ytpl"
 #define MSGTYP_YTDL_GET "ytdl_get"
-#define MSGTYP_YTDLPROG "app_download_progress"
-#define MSGTYP_ERR "app_error"
-#define MSGTYP_MSG "app_message"
+#define MSGTYP_YTDLPROG "ytdl_progress"
 #define MSGTYP_YTDL_COMP "ytdl_comp"
 #define MSGTYP_YTDL_FAIL "ytdl_fail"
+
+#define MSGTYP_ERR "app_error"
+#define MSGTYP_MSG "app_message"
 #define MSGTYP_UNSUPP "unsupported"

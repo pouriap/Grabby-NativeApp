@@ -327,6 +327,9 @@ void ytdl_get_th(const string &url, const string &fileName, const string &dlHash
 		savePath.append(".%(ext)s");
 
 		vector<string> args;
+		args.push_back("--progress-template");
+		//args.push_back("%(progress.downloaded_bytes)s|%(progress.total_bytes)s|%(progress.speed)s");
+		args.push_back("%(progress._percent_str)s|%(progress._speed_str)s");
 		args.push_back("--newline");
 		args.push_back("--output");
 		args.push_back(savePath);
