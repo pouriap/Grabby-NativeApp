@@ -99,6 +99,7 @@
     <ClInclude Include="targetver.h" />
     <ClInclude Include="utf8.h" />
     <ClInclude Include="utils.h" />
+    <ClInclude Include="ytdl_args.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="grabby_native_app.cpp" />
@@ -112,6 +113,7 @@
     </ClCompile>
     <ClCompile Include="utf8.cpp" />
     <ClCompile Include="utils.cpp" />
+    <ClCompile Include="ytdl_args.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Grabby Native App.rc" />

@@ -2,6 +2,7 @@
 
 #include "jsonla.h"
 #include "output_callback.h"
+#include "ytdl_args.h"
 #include <string>
 
 using namespace std;
@@ -15,6 +16,6 @@ void handle_download(const Json &msg);
 void handle_ytdlinfo(const Json &msg);
 void handle_ytdlget(const Json &msg);
 void flashGot(const string &jobJSON);
-void ytdl_info_th(const string &url, const string &dlHash, const Json &msg);
-void ytdl_get_th(const string &url, const string &fileName, const string &dlHash, const Json &msg);
-string ytdl(const string &url, vector<string> args, const Json &msg, output_callback *callback = NULL);
+void ytdl_info_th(const string url, const string dlHash, ytdl_args *arger);
+void ytdl_get_th(const string url, const string dlHash, ytdl_args *arger);
+string ytdl(const string &url, vector<string> &args, output_callback *callback = NULL);

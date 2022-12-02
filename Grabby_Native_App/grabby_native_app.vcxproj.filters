@@ -54,6 +54,9 @@
     <ClInclude Include="base64.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ytdl_args.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -78,6 +81,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="grabby_native_app.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ytdl_args.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

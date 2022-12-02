@@ -23,6 +23,7 @@
 #include "utils.h"
 #include "messaging.h"
 #include "exceptions.h"
+#include "ytdl_args.h"
 #include "defines.h"
 #include "base64.hpp"
 
@@ -210,18 +211,40 @@ void handle_download(const Json &msg)
 
 void handle_ytdlinfo(const Json &msg)
 {
-	string pageUrl = msg["url"].AsString();
+	string url = msg["url"].AsString();
 	string dlHash = msg["dlHash"].AsString();
-	std::thread th1(ytdl_info_th, pageUrl, dlHash, msg);
+
+	ytdl_args *arger = new ytdl_info(msg);
+
+	std::thread th1(ytdl_info_th, url, dlHash, arger);
 	th1.detach();
 }
 
 void handle_ytdlget(const Json &msg)
 {
 	string url = msg["url"].AsString();
-	string name = msg["filename"].AsString();
 	string dlHash = msg["dlHash"].AsString();
-	std::thread th1(ytdl_get_th, url, name, dlHash, msg);
+	string type = msg["subtype"].AsString();
+	ytdl_args *arger;
+
+	if(type == YTDLTYP_VID)
+	{ 
+		arger = new ytdl_video(msg);
+	}
+	else if(type == YTDLTYP_AUD)
+	{
+		arger = new ytdl_audio(msg);
+	}
+	else if(type == YTDLTYP_PLVID)
+	{
+		arger = new ytdl_playlist_video(msg);
+	}
+	else if(type == YTDLTYP_PLAUD)
+	{
+		arger = new ytdl_playlist_audio(msg);
+	}
+
+	std::thread th1(ytdl_get_th, url, dlHash, arger);
 	th1.detach();
 }
 
@@ -248,15 +271,11 @@ void flashGot(const string &jobJSON)
 	}
 }
 
-void ytdl_info_th(const string &url, const string &dlHash, const Json &msg)
+void ytdl_info_th(const string url, const string dlHash, ytdl_args *arger)
 {
 	try
 	{
-		vector<string> args;
-		args.push_back("-j");
-		//if it's a playlist, flatten it (do not extract info for individual videos)
-		args.push_back("--flat-playlist");
-		string ytdlOutput = ytdl(url, args, msg);
+		string ytdlOutput = ytdl(url, arger->getArgs());
 
 		vector<string> lines = utils::strSplit(ytdlOutput, '\n');
 
@@ -265,6 +284,7 @@ void ytdl_info_th(const string &url, const string &dlHash, const Json &msg)
 
 		try
 		{
+			//if it's a playlist
 			if(lines.size() > 1)
 			{
 				type = MSGTYP_YTDL_INFO_YTPL;
@@ -308,55 +328,32 @@ void ytdl_info_th(const string &url, const string &dlHash, const Json &msg)
 
 		messaging::sendMessage(msg);
 	}
-	catch(...){} 	//ain't nothing we can do if we're here
+	catch(...){}	//ain't nothing we can do if we're here
+
+	delete arger;
 }
 
-void ytdl_get_th(const string &url, const string &fileName, const string &dlHash, const Json &msg)
+void ytdl_get_th(const string url, const string dlHash, ytdl_args *arger)
 {
 	try
 	{
-		string safeName = utils::sanitizeFilename(fileName.c_str());
-		string savePath = utils::saveDialog(safeName);
+		string savePath = utils::saveDialog("");
 
 		//if it's canceled do nothing
 		if(savePath.length() == 0)
 		{
+			delete arger;
 			return;
 		}
 
-		savePath.append(".%(ext)s");
+		savePath.append("%(title)s.%(ext)s");
 
-		vector<string> args;
-		args.push_back("--progress-template");
-		//args.push_back("%(progress.downloaded_bytes)s|%(progress.total_bytes)s|%(progress.speed)s");
-		args.push_back("%(progress._percent_str)s|%(progress._speed_str)s");
-		args.push_back("--newline");
-		args.push_back("--output");
-		args.push_back(savePath);
-
-		if(msg.Contains("formatId"))
-		{
-			string format = msg["formatId"].AsString();
-
-			//we need +bestaudio for cases where the audio is separate(youtube)
-			//if such format is not found then the normal format will be downloaded
-			string formatFull = format + "+bestaudio/" + format;
-
-			args.push_back("-f");
-			args.push_back(formatFull);
-			args.push_back("--merge-output-format");
-			args.push_back("mkv");
-		}
-
-		if(msg.Contains("audioOnly"))
-		{
-			args.push_back("-x");
-			args.push_back("--audio-format");
-			args.push_back("mp3");
-		}
+		arger->addArg("--restrict-filenames");
+		arger->addArg("--output");
+		arger->addArg(savePath);
 
 		output_callback callback(dlHash);
-		string output = ytdl(url, args, msg, &callback);
+		string output = ytdl(url, arger->getArgs(),&callback);
 
 		string type = (output.length() > 0) ? MSGTYP_YTDL_COMP : MSGTYP_YTDL_FAIL;
 
@@ -371,15 +368,12 @@ void ytdl_get_th(const string &url, const string &fileName, const string &dlHash
 		msg.append(e.what());
 		messaging::sendMessage(MSGTYP_ERR, msg);
 	}
-	catch(...){} 	//ain't nothing we can do if we're here
+	catch(...){}	//ain't nothing we can do if we're here
+
+	delete arger;
 }
 
-vector<string> ytdl_get_args(const Json &msg)
-{
-
-}
-
-string ytdl(const string &url, vector<string> args, const Json &msg, output_callback *callback)
+string ytdl(const string &url, vector<string> &args, output_callback *callback)
 {
 	try
 	{
@@ -395,15 +389,6 @@ string ytdl(const string &url, vector<string> args, const Json &msg, output_call
 		if(utils::strHasEnvars(url))
 		{
 			throw grb_exception("This URL is not supported");
-		}
-
-		args.push_back("--no-warnings");
-		args.push_back(url);
-
-		if(msg.Contains("proxy"))
-		{
-			args.push_back("--proxy");
-			args.push_back(msg["proxy"].AsString());
 		}
 
 		string output("");
