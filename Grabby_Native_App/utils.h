@@ -21,7 +21,8 @@ public:
 		const string &input = "", output_callback *callback = NULL );
 	static void strReplaceAll(string &data, const string &toSearch, const string &replaceStr);
 	static vector<string> strSplit(const string &str, const char delim);
-	static string saveDialog(const string &filename);
+	static string fileSaveDialog(const string &filename);
+	static string folderOpenDialog();
 	static string sanitizeFilename(const char* filename);
 	static vector<string> getEnvarNames();
 	static bool strHasEnvars(const string &str);

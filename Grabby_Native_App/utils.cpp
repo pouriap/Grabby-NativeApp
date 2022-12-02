@@ -327,31 +327,95 @@ vector<string> utils::strSplit(const string &str, const char delim)
 	return parts;
 }
 
-string utils::saveDialog(const string &filename)
+string utils::fileSaveDialog(const string &filename)
 {
 	//UI in multiple threads bad
 	std::lock_guard<std::mutex> lock(guiMutex);
 
-	OPENFILENAMEW ofn;
-	WCHAR szFileName[MAX_PATH];
-
-	ZeroMemory(&szFileName, sizeof(szFileName));
-	ZeroMemory(&ofn, sizeof(ofn));
-	StringCchCopy(szFileName, MAX_PATH, utf8::widen(filename).c_str());
-
-	ofn.hwndOwner = GetForegroundWindow();
-	ofn.lpstrTitle = L"Save As";
-	ofn.lStructSize = sizeof(ofn);
-	ofn.lpstrFile = szFileName;
-	ofn.nMaxFile = ARRAYSIZE(szFileName);
-	ofn.Flags = OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT | OFN_NOCHANGEDIR;
-
-	if (!GetSaveFileNameW(&ofn))
+	CoInitialize(nullptr);
+	string path = "";
+	IFileDialog *pfd = NULL;
+	HRESULT hr = CoCreateInstance(CLSID_FileSaveDialog, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pfd));
+	if (SUCCEEDED(hr))
 	{
-		return "";
+		DWORD dwFlags;
+		// get the options first in order not to override existing options.
+		if (SUCCEEDED(pfd->GetOptions(&dwFlags)))
+		{
+			// set the options
+			if (SUCCEEDED(pfd->SetOptions(dwFlags | FOS_OVERWRITEPROMPT | FOS_NOCHANGEDIR | FOS_PATHMUSTEXIST | FOS_FORCEFILESYSTEM)))
+			{
+				// set the default file name in dialog
+				if (SUCCEEDED(pfd->SetFileName(utf8::widen(filename).c_str())))
+				{
+					// show dialog
+					if (SUCCEEDED(pfd->Show(GetForegroundWindow())))
+					{
+						IShellItem *psiResult;
+						if (SUCCEEDED(pfd->GetResult(&psiResult)))
+						{
+							PWSTR pszFilePath = NULL;
+							if (SUCCEEDED(psiResult->GetDisplayName(SIGDN_FILESYSPATH, &pszFilePath)))
+							{
+								path = utf8::narrow(pszFilePath);
+							}
+							psiResult->Release();
+						}
+					}
+				}
+			}
+		}
+		pfd->Release();
 	}
 
-	return utf8::narrow(szFileName);
+	if(path.length() == 0)
+	{
+		throw grb_exception("failed to show save file dialog"); 
+	}
+
+	return path;
+}
+
+string utils::folderOpenDialog()
+{
+	//UI in multiple threads bad
+	std::lock_guard<std::mutex> lock(guiMutex);
+
+	CoInitialize(nullptr);
+	string path = "";
+	IFileDialog *pfd = NULL;
+	HRESULT hr = CoCreateInstance(CLSID_FileOpenDialog, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pfd));
+	if (SUCCEEDED(hr))
+	{
+		DWORD dwFlags;
+		if (SUCCEEDED(pfd->GetOptions(&dwFlags)))
+		{
+			if (SUCCEEDED(pfd->SetOptions(dwFlags | FOS_OVERWRITEPROMPT | FOS_NOCHANGEDIR | FOS_PATHMUSTEXIST | FOS_FORCEFILESYSTEM | FOS_PICKFOLDERS)))
+			{
+				if (SUCCEEDED(pfd->Show(GetForegroundWindow())))
+				{
+					IShellItem *psiResult;
+					if (SUCCEEDED(pfd->GetResult(&psiResult)))
+					{
+						PWSTR pszFilePath = NULL;
+						if (SUCCEEDED(psiResult->GetDisplayName(SIGDN_FILESYSPATH, &pszFilePath)))
+						{
+							path = utf8::narrow(pszFilePath) + "\\";
+						}
+						psiResult->Release();
+					}
+				}
+			}
+		}
+		pfd->Release();
+	}
+
+	if(path.length() == 0)
+	{
+		throw grb_exception("failed to show open folder dialog"); 
+	}
+
+	return path;
 }
 
 string utils::sanitizeFilename(const char* filename)

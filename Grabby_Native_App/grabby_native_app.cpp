@@ -225,6 +225,13 @@ void handle_ytdlget(const Json &msg)
 	string url = msg["url"].AsString();
 	string dlHash = msg["dlHash"].AsString();
 	string type = msg["subtype"].AsString();
+
+	string filename = "";
+	if(msg.Contains("filename"))
+	{
+		filename = msg["filename"].AsString();
+	}
+
 	ytdl_args *arger;
 
 	if(type == YTDLTYP_VID)
@@ -244,7 +251,7 @@ void handle_ytdlget(const Json &msg)
 		arger = new ytdl_playlist_audio(msg);
 	}
 
-	std::thread th1(ytdl_get_th, url, dlHash, arger);
+	std::thread th1(ytdl_get_th, url, dlHash, arger, filename);
 	th1.detach();
 }
 
@@ -333,11 +340,23 @@ void ytdl_info_th(const string url, const string dlHash, ytdl_args *arger)
 	delete arger;
 }
 
-void ytdl_get_th(const string url, const string dlHash, ytdl_args *arger)
+void ytdl_get_th(const string url, const string dlHash, ytdl_args *arger, const string filename)
 {
 	try
 	{
-		string savePath = utils::saveDialog("");
+		string savePath = "";
+		// if it's a single video
+		if(filename.length() > 0)
+		{
+			savePath = utils::fileSaveDialog(utils::sanitizeFilename(filename.c_str()));
+			savePath.append(".%(ext)s");
+		}
+		// if it's a plalist
+		else
+		{
+			savePath = utils::folderOpenDialog();
+			savePath.append("%(title)s.%(ext)s");
+		}
 
 		//if it's canceled do nothing
 		if(savePath.length() == 0)
@@ -346,9 +365,6 @@ void ytdl_get_th(const string url, const string dlHash, ytdl_args *arger)
 			return;
 		}
 
-		savePath.append("%(title)s.%(ext)s");
-
-		arger->addArg("--restrict-filenames");
 		arger->addArg("--output");
 		arger->addArg(savePath);
 
