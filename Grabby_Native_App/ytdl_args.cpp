@@ -18,8 +18,7 @@ ytdl_args::ytdl_args(const Json &msg)
 	//args.push_back("--restrict-filenames"); //no need we have sanitize
 	args.push_back("--no-warnings");
 	args.push_back("--progress-template");
-	//args.push_back("%(progress.downloaded_bytes)s|%(progress.total_bytes)s|%(progress.speed)s");
-	args.push_back("%(progress._percent_str)s|%(progress._speed_str)s");
+	args.push_back("%(progress._percent_str)s|%(progress._speed_str)s|%(info.playlist_index)s");
 	args.push_back("--newline");
 }
 

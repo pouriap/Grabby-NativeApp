@@ -33,6 +33,8 @@ void output_callback::call(const string &output)
 		msg.AddProperty("dlHash", Json(dlHash));
 		msg.AddProperty("percent_str", Json(parts[0]));
 		msg.AddProperty("speed_str", Json(parts[1]));
-		messaging::sendMessageLimit(msg, 1);
+		msg.AddProperty("playlist_index", Json(parts[2]));
+		//messaging::sendMessageLimit(msg, 1);
+		messaging::sendMessage(msg);
 	}
 }

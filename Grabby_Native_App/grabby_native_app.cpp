@@ -200,7 +200,7 @@ void handle_download(const Json &msg)
 	{
 		const Json &job = msg["job"];
 		string jobJSON = job.ToString();
-		flashGot(jobJSON);
+		flashgot_job(jobJSON);
 	}
 	catch(grb_exception &e)
 	{
@@ -256,7 +256,7 @@ void handle_ytdlget(const Json &msg)
 }
 
 //launches FlashGot to perform a download with a DM
-void flashGot(const string &jobJSON)
+void flashgot_job(const string &jobJSON)
 {
 	try
 	{
@@ -369,13 +369,13 @@ void ytdl_get_th(const string url, const string dlHash, ytdl_args *arger, const 
 		arger->addArg(savePath);
 
 		output_callback callback(dlHash);
-		string output = ytdl(url, arger->getArgs(),&callback);
+		string output = ytdl(url, arger->getArgs(), &callback);
 
 		string type = (output.length() > 0) ? MSGTYP_YTDL_COMP : MSGTYP_YTDL_FAIL;
 
 		Json msg = Json::Parse("{}");
-		msg.AddProperty("dlHash", Json(dlHash));
 		msg.AddProperty("type", Json(type));
+		msg.AddProperty("dlHash", Json(dlHash));
 		messaging::sendMessage(msg);
 	}
 	catch(exception &e)
