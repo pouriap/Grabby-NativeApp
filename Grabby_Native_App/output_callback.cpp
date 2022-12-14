@@ -19,22 +19,40 @@ void output_callback::call(const string &output)
 {
 	//get last line of output, cause output can be multiple lines
 	vector<string> lines = utils::strSplit(output, '\n');
-	vector<string> parts = utils::strSplit(lines.back(), '|');
+	string line = lines.back();
+
+	if(line.find('|') == string::npos || line.find('%') == string::npos)
+	{
+		return;
+	}
+
+	vector<string> parts = utils::strSplit(line, '|');
 
 	if(parts.size() == 0)
 	{
 		return;
 	}
 
-	if(parts[0].find('%') != string::npos)
+	string percent_str = utils::trim(parts[0]);
+	string speed_str = utils::trim(parts[1]);
+	string plIndex_str = utils::trim(parts[2]);
+
+	percent_str = percent_str.substr(0, percent_str.find_last_of('%'));
+
+	Json msg = Json::Parse("{}");
+	msg.AddProperty("type", Json(MSGTYP_YTDLPROG));
+	msg.AddProperty("dlHash", Json(dlHash));
+	msg.AddProperty("percent_str", Json(percent_str));
+	msg.AddProperty("speed_str", Json(speed_str));
+	msg.AddProperty("playlist_index", Json(plIndex_str));
+
+	//always send the 100% message
+	if(percent_str == "100")
 	{
-		Json msg = Json::Parse("{}");
-		msg.AddProperty("type", Json(MSGTYP_YTDLPROG));
-		msg.AddProperty("dlHash", Json(dlHash));
-		msg.AddProperty("percent_str", Json(parts[0]));
-		msg.AddProperty("speed_str", Json(parts[1]));
-		msg.AddProperty("playlist_index", Json(parts[2]));
-		//messaging::sendMessageLimit(msg, 1);
 		messaging::sendMessage(msg);
+	}
+	else
+	{
+		messaging::sendMessageLimit(msg, 1);
 	}
 }

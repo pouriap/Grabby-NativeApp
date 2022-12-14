@@ -27,6 +27,7 @@ public:
 	static vector<string> getEnvarNames();
 	static bool strHasEnvars(const string &str);
 	static string strToLower(const string &str);
+	static string trim(string str);
 
 private:
 	static string getSpecialPath(REFKNOWNFOLDERID rfid);

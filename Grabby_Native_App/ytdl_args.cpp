@@ -97,9 +97,9 @@ vector<string> ytdl_playlist_video::getArgs()
 	args.push_back("--playlist-items");
 	args.push_back(indexesStr);
 
-	//-S "res:480" -f "bestvideo[vcodec*=avc][container=mp4_dash]+bestaudio"
+	//-S "+res:480" -f "bestvideo[vcodec*=avc][container=mp4_dash]+bestaudio"
 	args.push_back("-S");
-	args.push_back("res:" + res);
+	args.push_back("+res:" + res);
 	args.push_back("-f");
 	args.push_back("bestvideo[vcodec*=avc]+bestaudio");
 	args.push_back("--merge-output-format");

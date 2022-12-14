@@ -524,3 +524,12 @@ string utils::strToLower(const string &str)
 
 	return strl;
 }
+
+string utils::trim(string str)
+{
+	const char* ws = " \t\n\r\f\v";
+	str.erase(str.find_last_not_of(ws) + 1);
+	str.erase(0, str.find_first_not_of(ws));
+
+	return str;
+}
