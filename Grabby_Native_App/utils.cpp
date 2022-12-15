@@ -127,8 +127,8 @@ string utils::getGRBTempDir()
 //h_child_stdout_w
 //h_child_stdin_r
 //h_child_stdin_w
-DWORD utils::launchExe(const string &exeName, const vector<string> &args, string *output, 
-					   const string &input, output_callback *callback)
+process_result utils::launchExe(const string &exeName, const vector<string> &args, const string &input, 
+					   const bool &kill, output_callback *callback)
 {
 	HANDLE h_child_stdout_r = NULL;
 	HANDLE h_child_stdout_w = NULL;
@@ -174,7 +174,7 @@ DWORD utils::launchExe(const string &exeName, const vector<string> &args, string
 	siStartInfo.hStdOutput = h_child_stdout_w;
 	siStartInfo.hStdInput = h_child_stdin_r;
 
-	DWORD processFlags = CREATE_NO_WINDOW | CREATE_UNICODE_ENVIRONMENT;
+	DWORD processFlags = CREATE_UNICODE_ENVIRONMENT | CREATE_NEW_PROCESS_GROUP;
 
 	//first part of cmd line has to also be the application name
 	string cmd = "";
@@ -253,22 +253,32 @@ DWORD utils::launchExe(const string &exeName, const vector<string> &args, string
 	bSuccess = FALSE;
 	vector<char> out;
 
+	//keep reading process output until it exits or we receive a kill command
 	while(true)
 	{
-		out.reserve(BUFSIZE);
+		//ReadFile returns when it reaches a carriage return or eof
 		bSuccess = ReadFile(h_child_stdout_r, buf, BUFSIZE, &bytesRead, NULL);
+
 		if(!bSuccess || bytesRead<=0)
 		{
 			break;
 		}
+
+		out.reserve(BUFSIZE);
 		out.insert(out.end(), buf, buf+bytesRead);
 		totalRead += bytesRead;
+
 		//pass output to callback function
-		//ReadFile returns when it reaches a carriage return
 		if(callback != NULL)
 		{
 			string outStr(buf, buf+bytesRead);
 			callback->call(outStr);
+		}
+
+		if(kill)
+		{
+			GenerateConsoleCtrlEvent(CTRL_BREAK_EVENT, piProcInfo.dwProcessId);
+			break;
 		}
 	}
 
@@ -284,18 +294,21 @@ DWORD utils::launchExe(const string &exeName, const vector<string> &args, string
 	CloseHandle(piProcInfo.hProcess);
 	CloseHandle(piProcInfo.hThread);
 
+	process_result res;
+	res.exitCode = exitCode;
+
 	if(totalRead<=0)
 	{
-		*output = "";
+		res.output = "";
 	}
 	else
 	{
-		*output = string(out.begin(), out.end());
+		res.output = string(out.begin(), out.end());
 	}
 
-	PLOG_INFO << "exe output be: " << *output;
+	PLOG_INFO << "exe output be: " << res.output;
 
-	return exitCode;
+	return res;
 
 }
 

@@ -6,6 +6,8 @@
 #define GRB_ADDON_ID "grabby.pouriap"
 #define CMD_MAX_LEN 4096
 
+#define YTDL_CANCEL_CODE 3221225786
+
 //message types
 #define MSGTYP_GET_AVAIL_DMS "get_available_dms"
 #define MSGTYP_AVAIL_DMS "available_dms"
@@ -21,6 +23,7 @@
 #define MSGTYP_YTDLPROG "ytdl_progress"
 #define MSGTYP_YTDL_COMP "ytdl_comp"
 #define MSGTYP_YTDL_FAIL "ytdl_fail"
+#define MSGTYP_YTDL_KILL "ytdl_kill"
 
 #define MSGTYP_ERR "app_error"
 #define MSGTYP_MSG "app_message"

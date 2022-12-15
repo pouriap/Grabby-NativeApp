@@ -4,6 +4,7 @@
 #include <Shlobj.h>
 #include "jsonla.h"
 #include "output_callback.h"
+#include "types.h"
 
 using namespace std;
 
@@ -17,8 +18,8 @@ public:
 	static string getNewTempFileName();
 	static bool mkdir(const string &dirName);
 	static string getGRBTempDir();
-	static DWORD launchExe(const string &exeName, const vector<string> &args, string *output, 
-		const string &input = "", output_callback *callback = NULL );
+	static process_result launchExe(const string &exeName, const vector<string> &args,
+		const string &input = "", const bool &kill = false, output_callback *callback = NULL );
 	static void strReplaceAll(string &data, const string &toSearch, const string &replaceStr);
 	static vector<string> strSplit(const string &str, const char delim);
 	static string fileSaveDialog(const string &filename);
