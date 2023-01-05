@@ -334,8 +334,8 @@ void ytdl_info_th(const string url, const string dlHash, ytdl_args *arger)
 		{
 			//YTDL output not JSON
 			//Happens when YTDL outputs an error
-			info = Json("YouTubeDL returned an error. Consult the native app log for more info");
-			PLOG_ERROR << "YouTubeDL returned an error" << res.output;
+			info = Json(res.output);
+			PLOG_ERROR << "youtube-dl returned an error" << res.output;
 		}
 
 		Json msg = Json::Parse("{}");
