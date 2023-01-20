@@ -26,6 +26,7 @@
 #include "ytdl_args.h"
 #include "defines.h"
 #include "base64.hpp"
+#include <gzip/compress.hpp>
 
 using namespace std;
 using namespace ggicci;
@@ -305,29 +306,52 @@ void ytdl_info_th(const string url, const string dlHash, ytdl_args *arger)
 			if(lines.size() > 1)
 			{
 				type = MSGTYP_YTDL_INFO_YTPL;
-				info = Json::Parse("[]");
+				Json infoTmp = Json::Parse("[]");
 
 				//we have a for loop because playlists are outputted as one line of JSON for each list item
 				for(int i=0; i<lines.size(); i++)
 				{
 					Json j = utils::parseJSON(lines[i].c_str());
-					info.Push(j);
+					infoTmp.Push(j);
 				}
+
+				//we do this because sometimes JSON gets very big, specially for playlists
+				string infoStr = infoTmp.ToString();
+
+				//gzip the string and then base64 it and then send
+				const char * pointer = infoStr.data();
+				size_t size = infoStr.size();
+				string comp = gzip::compress(pointer, size, 9);
+				string infoB64 = to_base64(comp);
+				info = Json(infoB64);
 			}
 			else
 			{
 				info = utils::parseJSON(lines[0]);
 
 				//remove big unused things from info to avoid JSON getting to big for native messaging
-				if(info.Contains("thumbnails")){
-					info.Remove("thumbnails");
-				}
 				if(info.Contains("automatic_captions")){
 					info.Remove("automatic_captions");
 				}
 				if(info.Contains("subtitles")){
 					info.Remove("subtitles");
 				}
+				if(info.Contains("categories")){
+					info.Remove("categories");
+				}
+				if(info.Contains("requested_formats"))
+				{
+					info.Remove("requested_formats");
+				}
+				if(info.Contains("tags"))
+				{
+					info.Remove("tags");
+				}
+				if(info.Contains("description"))
+				{
+					info.Remove("description");
+				}
+
 			}
 		}
 		catch(...)

@@ -46,7 +46,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(ProjectDir)\includes;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)\includes;$(ProjectDir)\includes\zlib\include;$(IncludePath)</IncludePath>
     <TargetName>grabby_native_app</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -81,6 +81,8 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalLibraryDirectories>$(ProjectDir)\includes\zlib\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>zlibstatic.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -88,6 +90,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="base64.hpp" />
+    <ClInclude Include="compress.hpp" />
     <ClInclude Include="defines.h" />
     <ClInclude Include="grabby_native_app.h" />
     <ClInclude Include="exceptions.h" />

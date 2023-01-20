@@ -5,6 +5,7 @@
 //general defines
 #define GRB_ADDON_ID "grabby.pouriap"
 #define CMD_MAX_LEN 4096
+#define NATIVE_MESSAGE_MAX_LEN 1000000
 
 #define YTDL_CANCEL_CODE 3221225786
 

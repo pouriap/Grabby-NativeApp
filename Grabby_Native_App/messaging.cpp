@@ -77,6 +77,11 @@ void messaging::sendMessage(const string &type, const string &content)
 	sendMessage(json);
 }
 
+void messaging::sendMessage(const ggicci::Json &msg)
+{
+	sendMessageRaw(msg.ToString());
+}
+
 void messaging::sendMessageLimit(const ggicci::Json &msg, int interval)
 {
 	std::time_t t = std::time(nullptr) - lastSentTime;
@@ -84,11 +89,6 @@ void messaging::sendMessageLimit(const ggicci::Json &msg, int interval)
 	{
 		sendMessage(msg);
 	}
-}
-
-void messaging::sendMessage(const ggicci::Json &msg)
-{
-	sendMessageRaw(msg.ToString());
 }
 
 void messaging::sendMessageRaw(string content)
@@ -99,6 +99,11 @@ void messaging::sendMessageRaw(string content)
 
 	utils::strReplaceAll(content, "\r", "\\r");
 	utils::strReplaceAll(content, "\n", "\\n");
+
+	if(content.length() > NATIVE_MESSAGE_MAX_LEN)
+	{
+		throw grb_exception("message is too long");
+	}
 
 	PLOG_INFO << "sending: " << content;
 
