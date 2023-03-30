@@ -38,6 +38,7 @@ void output_callback::call(const string &output)
 	string plIndex_str = utils::trim(parts[2]);
 
 	percent_str = percent_str.substr(0, percent_str.find_last_of('%'));
+	int percent = atoi(percent_str.c_str());
 
 	Json msg = Json::Parse("{}");
 	msg.AddProperty("type", Json(MSGTYP_YTDLPROG));
@@ -47,7 +48,7 @@ void output_callback::call(const string &output)
 	msg.AddProperty("playlist_index", Json(plIndex_str));
 
 	//always send the 100% message
-	if(percent_str == "100")
+	if(percent == 100)
 	{
 		messaging::sendMessage(msg);
 	}
