@@ -11,6 +11,7 @@ using namespace ggicci;
 string setupTmpDir();
 void setupStdin();
 void processMessage(const Json &msg);
+void handle_getversion(const Json &msg);
 void handle_getavail(const Json &msg);
 void handle_download(const Json &msg);
 void handle_ytdlinfo(const Json &msg);

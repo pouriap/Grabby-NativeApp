@@ -10,6 +10,7 @@
 #define YTDL_CANCEL_CODE 3221225786
 
 //message types
+#define MSGTYP_GET_VERSION "get_version"
 #define MSGTYP_GET_AVAIL_DMS "get_available_dms"
 #define MSGTYP_AVAIL_DMS "available_dms"
 #define MSGTYP_DOWNLOAD "download"

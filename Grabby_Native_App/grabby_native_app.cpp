@@ -33,6 +33,7 @@ using namespace ggicci;
 using namespace base64;
 
 map<string, bool> ytdlKillSwitches;
+string versionStr = "0.61.0";
 
 int wmain(int argc, WCHAR *argv[], WCHAR *envp[])
 {
@@ -132,7 +133,11 @@ void processMessage(const Json &msg)
 	{
 		string type = msg["type"].AsString();
 
-		if(type == MSGTYP_GET_AVAIL_DMS)
+		if(type == MSGTYP_GET_VERSION)
+		{
+			handle_getversion(msg);
+		}
+		else if(type == MSGTYP_GET_AVAIL_DMS)
 		{
 			handle_getavail(msg);
 		}
@@ -167,6 +172,14 @@ void processMessage(const Json &msg)
 		msg.append(e.what());
 		throw grb_exception(msg.c_str());
 	}
+}
+
+void handle_getversion(const Json &msg)
+{
+	Json version = Json::Parse("{}");
+	version.AddProperty("type", Json("version"));
+	version.AddProperty("version", Json(versionStr));
+	messaging::sendMessage(version);
 }
 
 //handles "get_available_dms" request
