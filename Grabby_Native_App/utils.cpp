@@ -176,6 +176,11 @@ process_result utils::launchExe(const string &exeName, const vector<string> &arg
 
 	DWORD processFlags = CREATE_UNICODE_ENVIRONMENT | CREATE_NEW_PROCESS_GROUP;
 
+	if(exeName != "yt-dlp.exe")
+	{
+		processFlags |= CREATE_BREAKAWAY_FROM_JOB;
+	}
+
 	//first part of cmd line has to also be the application name
 	string cmd = "";
 	cmd.append("\"").append(exeName).append("\"");
@@ -310,6 +315,65 @@ process_result utils::launchExe(const string &exeName, const vector<string> &arg
 
 	return res;
 
+}
+
+DWORD utils::runCmd(const string &cmd)
+{
+	BOOL bSuccess = TRUE;
+
+	PROCESS_INFORMATION piProcInfo; 
+	STARTUPINFO siStartInfo;
+
+	ZeroMemory( &piProcInfo, sizeof(PROCESS_INFORMATION) );
+	ZeroMemory( &siStartInfo, sizeof(STARTUPINFO) );
+	siStartInfo.cb = sizeof(STARTUPINFO); 
+
+	DWORD processFlags = CREATE_UNICODE_ENVIRONMENT | CREATE_BREAKAWAY_FROM_JOB | CREATE_NEW_CONSOLE;
+
+	if(cmd.length() > CMD_MAX_LEN)
+	{
+		throw grb_exception("Command line too big");
+	}
+
+	PLOG_INFO << "custom cmd: " << cmd;
+
+	WCHAR cmdWchar[CMD_MAX_LEN] = { '\0' };
+	StringCchCopyW(cmdWchar, CMD_MAX_LEN, utf8::widen(cmd).c_str());
+
+	// Create the child process. 
+	bSuccess = CreateProcessW(
+		NULL,		   // No module name (use command line)
+		cmdWchar,      // command line
+		NULL,          // process security attributes 
+		NULL,          // primary thread security attributes 
+		FALSE,         // handles not inherited 
+		processFlags,  // creation flags 
+		NULL,          // use parent environment
+		NULL,          // use parent's current directory 
+		&siStartInfo,  // STARTUPINFO pointer 
+		&piProcInfo);  // receives PROCESS_INFORMATION 
+
+	// If an error occurs, exit the application. 
+	if (!bSuccess) 
+	{
+		string msg = "Create process failed with error code ";
+		msg.append( std::to_string(GetLastError()) );
+		throw grb_exception(msg.c_str());
+	}
+
+	// Process has exited - check its exit code
+	WaitForSingleObject(piProcInfo.hProcess, INFINITE);
+	DWORD exitCode;
+	GetExitCodeProcess(piProcInfo.hProcess, &exitCode);
+	PLOG_INFO << "custom cmd exit code is " << exitCode;
+
+	// Close handles to the child process and its primary thread.
+	// Some applications might keep these handles to monitor the status
+	// of the child process, for example. 
+	CloseHandle(piProcInfo.hProcess);
+	CloseHandle(piProcInfo.hThread);
+
+	return exitCode;
 }
 
 void utils::strReplaceAll(string &data, const string &toSearch, const string &replaceStr)

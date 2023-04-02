@@ -14,6 +14,7 @@ void processMessage(const Json &msg);
 void handle_getversion(const Json &msg);
 void handle_getavail(const Json &msg);
 void handle_download(const Json &msg);
+void handle_userCMD(const Json &msg);
 void handle_ytdlinfo(const Json &msg);
 void handle_ytdlget(const Json &msg);
 void handle_ytdlkill(const Json &msg);

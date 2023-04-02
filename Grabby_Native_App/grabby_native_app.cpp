@@ -145,6 +145,10 @@ void processMessage(const Json &msg)
 		{
 			handle_download(msg);
 		}
+		else if(type == MSGTYP_USER_CMD)
+		{
+			handle_userCMD(msg);
+		}
 		else if(type == MSGTYP_YTDL_INFO)
 		{
 			handle_ytdlinfo(msg);
@@ -220,6 +224,24 @@ void handle_download(const Json &msg)
 		const Json &job = msg["job"];
 		string jobJSON = job.ToString();
 		flashgot_job(jobJSON);
+	}
+	catch(grb_exception &e)
+	{
+		messaging::sendMessage(MSGTYP_ERR, e.what());
+		PLOG_ERROR << e.what();
+	}
+}
+
+//handled user-specified download manager cmd
+//TODO: Json library cannot handle double quotes in strings
+// for example {"name": "\"jack\""} becomes \"jack\" instead of just "jack"
+void handle_userCMD(const Json &msg)
+{
+	try
+	{
+		string cmd = msg["cmd"].AsString();
+		cmd = from_base64(cmd);
+		utils::runCmd(cmd);
 	}
 	catch(grb_exception &e)
 	{

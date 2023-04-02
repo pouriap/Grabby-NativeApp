@@ -14,6 +14,7 @@
 #define MSGTYP_GET_AVAIL_DMS "get_available_dms"
 #define MSGTYP_AVAIL_DMS "available_dms"
 #define MSGTYP_DOWNLOAD "download"
+#define MSGTYP_USER_CMD "user_cmd"
 
 #define MSGTYP_YTDL_INFO "ytdl_info"
 #define MSGTYP_YTDL_INFO_YTPL "ytdl_info_ytpl"
