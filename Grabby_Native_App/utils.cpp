@@ -317,7 +317,7 @@ process_result utils::launchExe(const string &exeName, const vector<string> &arg
 
 }
 
-DWORD utils::runCmd(const string &cmd)
+DWORD utils::runCmd(const string &cmd, bool showConsole)
 {
 	BOOL bSuccess = TRUE;
 
@@ -328,7 +328,16 @@ DWORD utils::runCmd(const string &cmd)
 	ZeroMemory( &siStartInfo, sizeof(STARTUPINFO) );
 	siStartInfo.cb = sizeof(STARTUPINFO); 
 
-	DWORD processFlags = CREATE_UNICODE_ENVIRONMENT | CREATE_BREAKAWAY_FROM_JOB | CREATE_NEW_CONSOLE;
+	DWORD processFlags = CREATE_UNICODE_ENVIRONMENT | CREATE_BREAKAWAY_FROM_JOB;
+
+	if(showConsole)
+	{
+		processFlags |= CREATE_NEW_CONSOLE;
+	}
+	else
+	{
+		processFlags |= CREATE_NO_WINDOW;
+	}
 
 	if(cmd.length() > CMD_MAX_LEN)
 	{
@@ -409,8 +418,10 @@ string utils::fileSaveDialog(const string &filename)
 	//UI in multiple threads bad
 	std::lock_guard<std::mutex> lock(guiMutex);
 
-	CoInitialize(nullptr);
 	string path = "";
+	bool cancelled = false;
+
+	CoInitialize(nullptr);
 	IFileDialog *pfd = NULL;
 	HRESULT hr = CoCreateInstance(CLSID_FileSaveDialog, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pfd));
 	if (SUCCEEDED(hr))
@@ -426,7 +437,12 @@ string utils::fileSaveDialog(const string &filename)
 				if (SUCCEEDED(pfd->SetFileName(utf8::widen(filename).c_str())))
 				{
 					// show dialog
-					if (SUCCEEDED(pfd->Show(GetForegroundWindow())))
+					HRESULT res = pfd->Show(GetForegroundWindow());
+					if(res == HRESULT_FROM_WIN32(ERROR_CANCELLED))
+					{
+						cancelled = true;
+					}
+					if (SUCCEEDED(res))
 					{
 						IShellItem *psiResult;
 						if (SUCCEEDED(pfd->GetResult(&psiResult)))
@@ -445,7 +461,7 @@ string utils::fileSaveDialog(const string &filename)
 		pfd->Release();
 	}
 
-	if(path.length() == 0)
+	if(path.length() == 0 && !cancelled)
 	{
 		throw grb_exception("failed to show save file dialog"); 
 	}
@@ -458,8 +474,10 @@ string utils::folderOpenDialog()
 	//UI in multiple threads bad
 	std::lock_guard<std::mutex> lock(guiMutex);
 
-	CoInitialize(nullptr);
 	string path = "";
+	bool cancelled = false;
+
+	CoInitialize(nullptr);
 	IFileDialog *pfd = NULL;
 	HRESULT hr = CoCreateInstance(CLSID_FileOpenDialog, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pfd));
 	if (SUCCEEDED(hr))
@@ -469,7 +487,12 @@ string utils::folderOpenDialog()
 		{
 			if (SUCCEEDED(pfd->SetOptions(dwFlags | FOS_OVERWRITEPROMPT | FOS_NOCHANGEDIR | FOS_PATHMUSTEXIST | FOS_FORCEFILESYSTEM | FOS_PICKFOLDERS)))
 			{
-				if (SUCCEEDED(pfd->Show(GetForegroundWindow())))
+				HRESULT res = pfd->Show(GetForegroundWindow());
+				if(res == HRESULT_FROM_WIN32(ERROR_CANCELLED))
+				{
+					cancelled = true;
+				}
+				if (SUCCEEDED(res))
 				{
 					IShellItem *psiResult;
 					if (SUCCEEDED(pfd->GetResult(&psiResult)))
@@ -487,7 +510,7 @@ string utils::folderOpenDialog()
 		pfd->Release();
 	}
 
-	if(path.length() == 0)
+	if(path.length() == 0 && !cancelled)
 	{
 		throw grb_exception("failed to show open folder dialog"); 
 	}

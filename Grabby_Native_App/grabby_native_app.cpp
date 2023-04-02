@@ -240,8 +240,13 @@ void handle_userCMD(const Json &msg)
 	try
 	{
 		string cmd = msg["cmd"].AsString();
+		string filename = msg["filename"].AsString();
+		bool showConsole = msg["showConsole"].AsBool();
+		bool showSaveas = msg["showSaveas"].AsBool();
 		cmd = from_base64(cmd);
-		utils::runCmd(cmd);
+
+		std::thread th1(custom_command_th, cmd, filename, showConsole, showSaveas);
+		th1.detach();
 	}
 	catch(grb_exception &e)
 	{
@@ -322,6 +327,40 @@ void flashgot_job(const string &jobJSON)
 		msg.append(e.what());
 		throw grb_exception(msg.c_str());
 	}
+}
+
+void custom_command_th(string cmd, const string filename, bool showConsole, bool showSaveas)
+{
+	try
+	{
+		string savePath = "";
+
+		if(showSaveas)
+		{
+			savePath = utils::folderOpenDialog();
+
+			// if user chose cancel in browse dialog do nothing
+			if(savePath.length() == 0)
+			{
+				return;
+			}
+
+			string placeholder = "*$*FOLDER*$*";
+
+			cmd.replace(cmd.find(placeholder), placeholder.length(), savePath);
+		}
+
+		utils::runCmd(cmd, showConsole);
+
+	}
+	catch(exception &e)
+	{
+		string msg = "Error executing command line: ";
+		msg.append(e.what());
+		messaging::sendMessage(MSGTYP_ERR, msg);
+	}
+	catch(...){}	//ain't nothing we can do if we're here
+
 }
 
 void ytdl_info_th(const string url, const string dlHash, ytdl_args *arger)
@@ -414,17 +453,22 @@ void ytdl_get_th(const string url, const string dlHash, ytdl_args *arger, const 
 	try
 	{
 		string savePath = "";
+
 		// if it's a single video
 		if(filename.length() > 0)
 		{
 			savePath = utils::fileSaveDialog(utils::sanitizeFilename(filename.c_str()));
-			savePath.append(".%(ext)s");
+			if(savePath.length() > 0){
+				savePath.append(".%(ext)s");
+			}
 		}
 		// if it's a playlist
 		else
 		{
 			savePath = utils::folderOpenDialog();
-			savePath.append("%(title)s.%(ext)s");
+			if(savePath.length() > 0){
+				savePath.append("%(title)s.%(ext)s");
+			}
 		}
 
 		// if user chose cancel in browse dialog do nothing

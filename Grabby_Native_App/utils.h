@@ -20,7 +20,7 @@ public:
 	static string getGRBTempDir();
 	static process_result launchExe(const string &exeName, const vector<string> &args,
 		const string &input = "", const bool &kill = false, output_callback *callback = NULL );
-	static DWORD runCmd(const string &cmd);
+	static DWORD runCmd(const string &cmd, bool showConsole);
 	static void strReplaceAll(string &data, const string &toSearch, const string &replaceStr);
 	static vector<string> strSplit(const string &str, const char delim);
 	static string fileSaveDialog(const string &filename);
