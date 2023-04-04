@@ -15,9 +15,6 @@ public:
 	utils(void);
 	~utils(void);
 	static ggicci::Json parseJSON(const string &JSONstr);
-	static string getNewTempFileName();
-	static bool mkdir(const string &dirName);
-	static string getGRBTempDir();
 	static process_result launchExe(const string &exeName, const vector<string> &args,
 		const string &input = "", const bool &kill = false, output_callback *callback = NULL );
 	static DWORD runCmd(const string &cmd, bool showConsole);
@@ -30,11 +27,6 @@ public:
 	static bool strHasEnvars(const string &str);
 	static string strToLower(const string &str);
 	static string trim(string str);
-
-private:
-	static string getSpecialPath(REFKNOWNFOLDERID rfid);
-	static string getTempPath();
-	static bool dirExists(const string &dirName_in);
 
 };
 

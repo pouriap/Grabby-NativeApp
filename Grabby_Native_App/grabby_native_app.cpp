@@ -41,7 +41,6 @@ int wmain(int argc, WCHAR *argv[], WCHAR *envp[])
 	try{
 		plog::init(plog::debug, "log.txt", 1000*1000, 2);
 		setupStdin();
-		setupTmpDir();
 	}
 	catch(exception &e)
 	{
@@ -108,21 +107,6 @@ void setupStdin()
 	int res2 = _setmode( _fileno( stdout ), _O_BINARY );
 	if( res1 == -1 || res2 == -1){
 		throw fatal_exception("cannot set stdin mode to binary");
-	}
-}
-
-//sets up our temp directory where we put files
-string setupTmpDir()
-{
-	try
-	{
-		string GRBTempDir = utils::getGRBTempDir();
-		utils::mkdir(GRBTempDir);
-		return GRBTempDir;
-	}
-	catch(...)
-	{
-		throw fatal_exception("cannot setup temp directory");
 	}
 }
 

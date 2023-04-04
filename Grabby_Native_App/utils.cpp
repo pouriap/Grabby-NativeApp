@@ -1,10 +1,6 @@
 #include "stdafx.h"
-#include <fstream>
 #include "utils.h"
 #include "utf8.h"
-#include "fileapi.h"
-#include <aclapi.h>
-#include <ctime>
 #include <strsafe.h>
 #include <mutex>
 #include "exceptions.h"
@@ -25,21 +21,6 @@ utils::~utils(void)
 {
 }
 
-string utils::getSpecialPath(REFKNOWNFOLDERID rfid)
-{
-	PWSTR path;
-	if(SHGetKnownFolderPath(rfid, 0, NULL, &path) != S_OK)
-	{
-		throw grb_exception("failed to get special path");
-	}
-
-	string stPath = utf8::narrow(path);
-	//SHGetKnownFolderPath does not include a trailing backslash
-	stPath.append("\\");
-	CoTaskMemFree(path);
-	return stPath;
-}
-
 Json utils::parseJSON(const string &JSONstr)
 {
 	try
@@ -53,67 +34,6 @@ Json utils::parseJSON(const string &JSONstr)
 		msg.append(e.what());
 		throw grb_exception(msg.c_str());
 	}
-}
-
-string utils::getTempPath()
-{
-	char str[MAX_PATH];
-	if(GetTempPathA(MAX_PATH, str) > 0)
-	{
-		return string(str);
-	}
-	//get appdata\local\temp if above failed
-	else{
-		string appdataLocal = utils::getSpecialPath(FOLDERID_LocalAppData);
-		appdataLocal.append("temp\\");
-		return appdataLocal;
-	}	
-}
-
-string utils::getNewTempFileName()
-{
-	std::time_t t = std::time(nullptr);
-	string time = std::to_string(t);
-	string filename = utils::getGRBTempDir();
-	filename.append("job_").append(time).append(".fgt");
-	return filename;
-}
-
-bool utils::mkdir(const string &dirName)
-{
-	if(utils::dirExists(dirName)){
-		return true;
-	}
-
-	if(CreateDirectoryA(dirName.c_str(), NULL))
-	{
-		return true;
-	}
-
-	throw grb_exception("failed to create temp directory");
-}
-
-bool utils::dirExists(const string& dirName_in)
-{
-	DWORD ftyp = GetFileAttributesA(dirName_in.c_str());
-
-	if (ftyp & FILE_ATTRIBUTE_DIRECTORY)
-	{
-		return true;
-	}
-
-	return false;
-}
-
-string utils::getGRBTempDir()
-{
-	static string GRBTempDir = "";
-	if(GRBTempDir.length() == 0)
-	{
-		string tempPath = utils::getTempPath();
-		GRBTempDir.append(tempPath).append(GRB_ADDON_ID);
-	}
-	return GRBTempDir;
 }
 
 // a pipe has two ends, a read handle and a write handle
