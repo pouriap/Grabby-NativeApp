@@ -69,7 +69,7 @@ int wmain(int argc, WCHAR *argv[], WCHAR *envp[])
 		{
 			string raw_message = messaging::get_message();
 			PLOG_INFO << "received message: " << raw_message;
-			Json &msg = utils::parseJSON(raw_message);
+			Json msg = utils::parseJSON(raw_message);
 			processMessage(msg);
 		}
 		catch(fatal_exception &e)
@@ -184,7 +184,7 @@ void handle_getavail(const Json &msg)
 
 	PLOG_INFO << "fg output be: " << res.output;
 
-	Json &dmsJSON = utils::parseJSON(res.output.c_str());
+	Json dmsJSON = utils::parseJSON(res.output.c_str());
 	Json avail = Json::Parse("{}");
 	avail.AddProperty("type", Json("available_dms"));
 	Json dms = Json::Parse("[]");
@@ -351,7 +351,8 @@ void ytdl_info_th(const string url, const string dlHash, ytdl_args *arger)
 {
 	try
 	{
-		process_result res = ytdl(url, dlHash, arger->getArgs());
+		vector<string> args = arger->getArgs();
+		process_result res = ytdl(url, dlHash, args);
 
 		vector<string> lines = utils::strSplit(res.output, '\n');
 
@@ -466,7 +467,8 @@ void ytdl_get_th(const string url, const string dlHash, ytdl_args *arger, const 
 		arger->addArg(savePath);
 
 		output_callback callback(dlHash);
-		process_result res = ytdl(url, dlHash, arger->getArgs(), &callback);
+		vector<string> args = arger->getArgs();
+		process_result res = ytdl(url, dlHash, args, &callback);
 
 		string type;
 		if(res.exitCode == YTDL_CANCEL_CODE) type = MSGTYP_YTDL_KILL;
