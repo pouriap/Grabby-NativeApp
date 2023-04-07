@@ -29,5 +29,6 @@
 #define MSGTYP_YTDL_KILL "ytdl_kill"
 
 #define MSGTYP_ERR "app_error"
+#define MSGTYP_ERR_GUI "app_error_gui"
 #define MSGTYP_MSG "app_message"
 #define MSGTYP_UNSUPP "unsupported"
