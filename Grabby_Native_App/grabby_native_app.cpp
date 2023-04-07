@@ -332,7 +332,7 @@ void custom_command_th(const string exeName, string cmd, const string filename, 
 		{
 			if(cmd.find(placeholder) == string::npos)
 			{
-				throw grb_exception("You have enabled the save-as dialog but you haven't specified [OUTPUT] in your arguments");
+				throw grb_exception_gui("You have enabled the save-as dialog but you haven't specified [OUTPUT] in your arguments");
 			}
 
 			savePath = utils::fileSaveDialog(filename);
@@ -349,11 +349,15 @@ void custom_command_th(const string exeName, string cmd, const string filename, 
 		utils::runCmd(exeName, cmd, showConsole);
 
 	}
+	catch(grb_exception_gui e)
+	{
+		messaging::sendMessage(MSGTYP_ERR_GUI, e.what());
+	}
 	catch(exception &e)
 	{
 		string msg = "Error executing custom command: ";
 		msg.append(e.what());
-		messaging::sendMessage(MSGTYP_ERR_GUI, msg);
+		messaging::sendMessage(MSGTYP_ERR, msg);
 	}
 	catch(...){}	//ain't nothing we can do if we're here
 
