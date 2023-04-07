@@ -237,7 +237,7 @@ process_result utils::launchExe(const string &exeName, const vector<string> &arg
 
 }
 
-DWORD utils::runCmd(const string &cmd, bool showConsole)
+DWORD utils::runCmd(const string &exeName, const string &cmd, bool showConsole)
 {
 	BOOL bSuccess = TRUE;
 
@@ -259,19 +259,29 @@ DWORD utils::runCmd(const string &cmd, bool showConsole)
 		processFlags |= CREATE_NO_WINDOW;
 	}
 
-	if(cmd.length() > CMD_MAX_LEN)
+	//first part of cmd line has to also be the application name
+	string cmdLine = "";
+	cmdLine.append("\"").append(exeName).append("\"").append(" ").append(cmd);
+
+	//some checks
+	if(exeName.length() > MAX_PATH)
+	{
+		throw grb_exception("Executable file name is too big");
+	}
+
+	if(cmdLine.length() > CMD_MAX_LEN)
 	{
 		throw grb_exception("Command line too big");
 	}
 
-	PLOG_INFO << "custom cmd: " << cmd;
+	PLOG_INFO << "exe name: " << exeName << " - cmd: " << cmdLine;
 
 	WCHAR cmdWchar[CMD_MAX_LEN] = { '\0' };
-	StringCchCopyW(cmdWchar, CMD_MAX_LEN, utf8::widen(cmd).c_str());
+	StringCchCopyW(cmdWchar, CMD_MAX_LEN, utf8::widen(cmdLine).c_str());
 
 	// Create the child process. 
 	bSuccess = CreateProcessW(
-		NULL,		   // No module name (use command line)
+		utf8::widen(exeName).c_str(),		   // Module name
 		cmdWchar,      // command line
 		NULL,          // process security attributes 
 		NULL,          // primary thread security attributes 

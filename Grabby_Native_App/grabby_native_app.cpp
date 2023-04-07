@@ -223,13 +223,14 @@ void handle_userCMD(const Json &msg)
 {
 	try
 	{
+		string exeName = msg["procName"].AsString();
 		string cmd = msg["cmd"].AsString();
 		string filename = msg["filename"].AsString();
 		bool showConsole = msg["showConsole"].AsBool();
 		bool showSaveas = msg["showSaveas"].AsBool();
 		cmd = from_base64(cmd);
 
-		std::thread th1(custom_command_th, cmd, filename, showConsole, showSaveas);
+		std::thread th1(custom_command_th, exeName, cmd, filename, showConsole, showSaveas);
 		th1.detach();
 	}
 	catch(grb_exception &e)
@@ -313,7 +314,7 @@ void flashgot_job(const string &jobJSON)
 	}
 }
 
-void custom_command_th(string cmd, const string filename, bool showConsole, bool showSaveas)
+void custom_command_th(const string exeName, string cmd, const string filename, bool showConsole, bool showSaveas)
 {
 	try
 	{
@@ -321,7 +322,7 @@ void custom_command_th(string cmd, const string filename, bool showConsole, bool
 
 		if(showSaveas)
 		{
-			savePath = utils::folderOpenDialog();
+			savePath = utils::fileSaveDialog(filename);
 
 			// if user chose cancel in browse dialog do nothing
 			if(savePath.length() == 0)
@@ -329,12 +330,17 @@ void custom_command_th(string cmd, const string filename, bool showConsole, bool
 				return;
 			}
 
-			string placeholder = "*$*FOLDER*$*";
+			string placeholder = "*$*OUTPUT*$*";
+
+			if(cmd.find(placeholder) == string::npos)
+			{
+				throw grb_exception("[OUTPUT] argument not specified");
+			}
 
 			cmd.replace(cmd.find(placeholder), placeholder.length(), savePath);
 		}
 
-		utils::runCmd(cmd, showConsole);
+		utils::runCmd(exeName, cmd, showConsole);
 
 	}
 	catch(exception &e)
