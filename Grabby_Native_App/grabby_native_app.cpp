@@ -319,22 +319,28 @@ void custom_command_th(const string exeName, string cmd, const string filename, 
 	try
 	{
 		string savePath = "";
+		string placeholder = "*$*OUTPUT*$*";
+
+		// if output is specified in the command line then we have to have a save as dialog 
+		// becuase it's meaningless without it
+		if(cmd.find(placeholder) != string::npos)
+		{
+			showSaveas = true;
+		}
 
 		if(showSaveas)
 		{
+			if(cmd.find(placeholder) == string::npos)
+			{
+				throw grb_exception("You have enabled the save-as dialog but you haven't specified [OUTPUT] in your arguments");
+			}
+
 			savePath = utils::fileSaveDialog(filename);
 
 			// if user chose cancel in browse dialog do nothing
 			if(savePath.length() == 0)
 			{
 				return;
-			}
-
-			string placeholder = "*$*OUTPUT*$*";
-
-			if(cmd.find(placeholder) == string::npos)
-			{
-				throw grb_exception("[OUTPUT] argument not specified");
 			}
 
 			cmd.replace(cmd.find(placeholder), placeholder.length(), savePath);
