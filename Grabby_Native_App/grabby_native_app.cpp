@@ -224,13 +224,21 @@ void handle_userCMD(const Json &msg)
 	try
 	{
 		string exeName = msg["procName"].AsString();
-		string cmd = msg["cmd"].AsString();
 		string filename = msg["filename"].AsString();
 		bool showConsole = msg["showConsole"].AsBool();
 		bool showSaveas = msg["showSaveas"].AsBool();
-		cmd = from_base64(cmd);
 
-		std::thread th1(custom_command_th, exeName, cmd, filename, showConsole, showSaveas);
+		Json argsJSON = msg["args"];
+		vector<string> args;
+
+		for(int i=0; i<argsJSON.Size(); i++)
+		{
+			string arg64 = argsJSON[i].AsString();
+			string arg = from_base64(arg64);
+			args.push_back(arg);
+		}
+
+		std::thread th1(custom_command_th, exeName, args, filename, showConsole, showSaveas);
 		th1.detach();
 	}
 	catch(grb_exception &e)
@@ -314,23 +322,33 @@ void flashgot_job(const string &jobJSON)
 	}
 }
 
-void custom_command_th(const string exeName, string cmd, const string filename, bool showConsole, bool showSaveas)
+void custom_command_th(const string exeName, vector<string> args, const string filename, bool showConsole, bool showSaveas)
 {
 	try
 	{
 		string savePath = "";
 		string placeholder = "*$*OUTPUT*$*";
+		bool outputSpecified = false;
 
 		// if output is specified in the command line then we have to have a save as dialog 
 		// becuase it's meaningless without it
-		if(cmd.find(placeholder) != string::npos)
+		for(int i=0; i<args.size(); i++)
+		{
+			if(args[i].find(placeholder) != string::npos)
+			{
+				outputSpecified = true;
+				break;
+			}
+		}
+
+		if(outputSpecified)
 		{
 			showSaveas = true;
 		}
 
 		if(showSaveas)
 		{
-			if(cmd.find(placeholder) == string::npos)
+			if(!outputSpecified)
 			{
 				throw grb_exception_gui("You have enabled the save-as dialog but you haven't specified [OUTPUT] in your arguments");
 			}
@@ -343,10 +361,19 @@ void custom_command_th(const string exeName, string cmd, const string filename, 
 				return;
 			}
 
-			cmd.replace(cmd.find(placeholder), placeholder.length(), savePath);
+			if(outputSpecified)
+			{
+				for(int i=0; i<args.size(); i++)
+				{
+					if(args[i].find(placeholder) != string::npos)
+					{
+						args[i].replace(args[i].find(placeholder), placeholder.length(), savePath);
+					}
+				}
+			}
 		}
 
-		utils::runCmd(exeName, cmd, showConsole);
+		utils::runCmd(exeName, args, showConsole);
 
 	}
 	catch(grb_exception_gui e)

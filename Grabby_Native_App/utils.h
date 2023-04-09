@@ -17,7 +17,7 @@ public:
 	static ggicci::Json parseJSON(const string &JSONstr);
 	static process_result launchExe(const string &exeName, const vector<string> &args,
 		const string &input = "", const bool &kill = false, output_callback *callback = NULL );
-	static DWORD runCmd(const string &exeName, const string &cmd, bool showConsole);
+	static DWORD runCmd(const string &exeName, const vector<string> &args, bool showConsole);
 	static void strReplaceAll(string &data, const string &toSearch, const string &replaceStr);
 	static vector<string> strSplit(const string &str, const char delim);
 	static string fileSaveDialog(const string &filename);

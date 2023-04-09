@@ -237,7 +237,7 @@ process_result utils::launchExe(const string &exeName, const vector<string> &arg
 
 }
 
-DWORD utils::runCmd(const string &exeName, const string &cmd, bool showConsole)
+DWORD utils::runCmd(const string &exeName, const vector<string> &args, bool showConsole)
 {
 	BOOL bSuccess = TRUE;
 
@@ -260,8 +260,18 @@ DWORD utils::runCmd(const string &exeName, const string &cmd, bool showConsole)
 	}
 
 	//first part of cmd line has to also be the application name
-	string cmdLine = "";
-	cmdLine.append("\"").append(exeName).append("\"").append(" ").append(cmd);
+	string cmd = "";
+	cmd.append("\"").append(exeName).append("\"");
+
+	//create cmd line of arguments from the args vector
+	for(int i=0; i<args.size(); i++)
+	{
+		//if it's an empty string don't add anything to command line
+		if(args[i].length() == 0){
+			continue;
+		}
+		cmd.append(" ").append("\"").append(args[i]).append("\"");
+	}
 
 	//some checks
 	if(exeName.length() > MAX_PATH)
@@ -269,15 +279,15 @@ DWORD utils::runCmd(const string &exeName, const string &cmd, bool showConsole)
 		throw grb_exception("Executable file name is too big");
 	}
 
-	if(cmdLine.length() > CMD_MAX_LEN)
+	if(cmd.length() > CMD_MAX_LEN)
 	{
 		throw grb_exception("Command line too big");
 	}
 
-	PLOG_INFO << "exe name: " << exeName << " - cmd: " << cmdLine;
+	PLOG_INFO << "exe name: " << exeName << " - cmd: " << cmd;
 
 	WCHAR cmdWchar[CMD_MAX_LEN] = { '\0' };
-	StringCchCopyW(cmdWchar, CMD_MAX_LEN, utf8::widen(cmdLine).c_str());
+	StringCchCopyW(cmdWchar, CMD_MAX_LEN, utf8::widen(cmd).c_str());
 
 	// Create the child process. 
 	bSuccess = CreateProcessW(
