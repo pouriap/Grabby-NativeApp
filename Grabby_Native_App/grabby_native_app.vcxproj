@@ -96,6 +96,7 @@
     <ClInclude Include="grabby_native_app.h" />
     <ClInclude Include="exceptions.h" />
     <ClInclude Include="jsonla.h" />
+    <ClInclude Include="kill_switches.h" />
     <ClInclude Include="messaging.h" />
     <ClInclude Include="output_callback.h" />
     <ClInclude Include="resource.h" />
@@ -110,6 +111,7 @@
     <ClCompile Include="grabby_native_app.cpp" />
     <ClCompile Include="exceptions.cpp" />
     <ClCompile Include="jsonla.cc" />
+    <ClCompile Include="kill_switches.cpp" />
     <ClCompile Include="messaging.cpp" />
     <ClCompile Include="output_callback.cpp" />
     <ClCompile Include="stdafx.cpp">

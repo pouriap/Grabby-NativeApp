@@ -1,10 +1,11 @@
 #include "stdafx.h"
-#include "utils.h"
-#include "utf8.h"
 #include <strsafe.h>
 #include <mutex>
+#include "utils.h"
+#include "utf8.h"
 #include "exceptions.h"
 #include "defines.h"
+#include "kill_switches.h"
 
 using namespace std;
 using namespace ggicci;
@@ -48,7 +49,7 @@ Json utils::parseJSON(const string &JSONstr)
 //h_child_stdin_r
 //h_child_stdin_w
 process_result utils::launchExe(const string &exeName, const vector<string> &args, const string &input, 
-					   const bool &kill, output_callback *callback)
+					   const string &killSwitch, output_callback *callback)
 {
 	HANDLE h_child_stdout_r = NULL;
 	HANDLE h_child_stdout_w = NULL;
@@ -201,7 +202,7 @@ process_result utils::launchExe(const string &exeName, const vector<string> &arg
 			callback->call(outStr);
 		}
 
-		if(kill)
+		if(killswitches::isActive(killSwitch))
 		{
 			GenerateConsoleCtrlEvent(CTRL_BREAK_EVENT, piProcInfo.dwProcessId);
 			break;

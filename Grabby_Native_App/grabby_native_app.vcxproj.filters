@@ -63,6 +63,9 @@
     <ClInclude Include="compress.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="kill_switches.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -90,6 +93,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ytdl_args.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="kill_switches.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
