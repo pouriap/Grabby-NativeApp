@@ -33,7 +33,7 @@ using namespace std;
 using namespace ggicci;
 using namespace base64;
 
-string versionStr = "0.61.0";
+string versionStr = "0.62.12";
 
 int wmain(int argc, WCHAR *argv[], WCHAR *envp[])
 {
