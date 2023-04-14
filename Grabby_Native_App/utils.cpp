@@ -96,6 +96,7 @@ process_result utils::launchExe(const string &exeName, const vector<string> &arg
 
 	DWORD processFlags = CREATE_UNICODE_ENVIRONMENT | CREATE_NEW_PROCESS_GROUP;
 
+	// breakaway interfers with the kill switch
 	if(exeName != "yt-dlp.exe")
 	{
 		processFlags |= CREATE_BREAKAWAY_FROM_JOB;
@@ -237,7 +238,7 @@ process_result utils::launchExe(const string &exeName, const vector<string> &arg
 
 }
 
-DWORD utils::runCmd(const string &exeName, const vector<string> &args, bool showConsole)
+DWORD utils::execCmd(const string &exeName, const vector<string> &args, bool showConsole)
 {
 	BOOL bSuccess = TRUE;
 
@@ -284,7 +285,7 @@ DWORD utils::runCmd(const string &exeName, const vector<string> &args, bool show
 		throw grb_exception("Command line too big");
 	}
 
-	PLOG_INFO << "exe name: " << exeName << " - cmd: " << cmd;
+	PLOG_INFO << "custom-exe-name: " << exeName << " - custom-cmd: " << cmd;
 
 	WCHAR cmdWchar[CMD_MAX_LEN] = { '\0' };
 	StringCchCopyW(cmdWchar, CMD_MAX_LEN, utf8::widen(cmd).c_str());

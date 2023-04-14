@@ -131,7 +131,7 @@ void processMessage(const Json &msg)
 		}
 		else if(type == MSGTYP_USER_CMD)
 		{
-			handle_userCMD(msg);
+			handle_custom_cmd(msg);
 		}
 		else if(type == MSGTYP_YTDL_INFO)
 		{
@@ -219,7 +219,7 @@ void handle_download(const Json &msg)
 //handled user-specified download manager cmd
 //TODO: Json library cannot handle double quotes in strings
 // for example {"name": "\"jack\""} becomes \"jack\" instead of just "jack"
-void handle_userCMD(const Json &msg)
+void handle_custom_cmd(const Json &msg)
 {
 	try
 	{
@@ -238,7 +238,7 @@ void handle_userCMD(const Json &msg)
 			args.push_back(arg);
 		}
 
-		std::thread th1(custom_command_th, exeName, args, filename, showConsole, showSaveas);
+		std::thread th1(custom_cmd_th, exeName, args, filename, showConsole, showSaveas);
 		th1.detach();
 	}
 	catch(grb_exception &e)
@@ -322,7 +322,7 @@ void flashgot_job(const string &jobJSON)
 	}
 }
 
-void custom_command_th(const string exeName, vector<string> args, const string filename, bool showConsole, bool showSaveas)
+void custom_cmd_th(const string exeName, vector<string> args, const string filename, bool showConsole, bool showSaveas)
 {
 	try
 	{
@@ -330,7 +330,7 @@ void custom_command_th(const string exeName, vector<string> args, const string f
 		string placeholder = "*$*OUTPUT*$*";
 		bool outputSpecified = false;
 
-		// if output is specified in the command line then we have to have a save as dialog 
+		// if output is specified in the command line then we have to have a save as dialog
 		// becuase it's meaningless without it
 		for(int i=0; i<args.size(); i++)
 		{
@@ -373,10 +373,10 @@ void custom_command_th(const string exeName, vector<string> args, const string f
 			}
 		}
 
-		utils::runCmd(exeName, args, showConsole);
+		utils::execCmd(exeName, args, showConsole);
 
 	}
-	catch(grb_exception_gui e)
+	catch(grb_exception_gui &e)
 	{
 		messaging::sendMessage(MSGTYP_ERR_GUI, e.what());
 	}
@@ -387,7 +387,6 @@ void custom_command_th(const string exeName, vector<string> args, const string f
 		messaging::sendMessage(MSGTYP_ERR, msg);
 	}
 	catch(...){}	//ain't nothing we can do if we're here
-
 }
 
 void ytdl_info_th(const string url, const string dlHash, ytdl_args *arger)
@@ -470,6 +469,12 @@ void ytdl_info_th(const string url, const string dlHash, ytdl_args *arger)
 		msg.AddProperty("info", info);
 
 		messaging::sendMessage(msg);
+	}
+	catch(exception &e)
+	{
+		string msg = "Error getting video info: ";
+		msg.append(e.what());
+		messaging::sendMessage(MSGTYP_ERR, msg);
 	}
 	catch(...){}	//ain't nothing we can do if we're here
 
@@ -559,6 +564,11 @@ process_result ytdl(const string &url, const string &dlHash, vector<string> &arg
 		process_result res = utils::launchExe("yt-dlp.exe", args, "", killSwitch, callback);
 
 		ytdlKillSwitches.erase(dlHash);
+
+		if(res.output.length() == 0)
+		{
+			throw grb_exception("could not read output from ytdl");
+		}
 
 		return res;
 	}
