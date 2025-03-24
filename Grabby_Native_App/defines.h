@@ -32,3 +32,7 @@
 #define MSGTYP_ERR_GUI "app_error_gui"
 #define MSGTYP_MSG "app_message"
 #define MSGTYP_UNSUPP "unsupported"
+
+#define FILETYPE_MKV 0
+#define FILETYPE_MP3 1
+#define FILETYPE_ALL 2

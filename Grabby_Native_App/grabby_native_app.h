@@ -21,5 +21,5 @@ void handle_ytdlkill(const Json &msg);
 void flashgot_job(const string &jobJSON);
 void custom_cmd_th(const string exeName, vector<string> args, const string filename, bool showConsole, bool showSaveas);
 void ytdl_info_th(const string url, const string dlHash, ytdl_args *arger);
-void ytdl_get_th(const string url, const string dlHash, ytdl_args *arger, const string filename);
+void ytdl_get_th(const string url, const string dlHash, ytdl_args *arger, const string filename, const int filetype);
 process_result ytdl(const string &url, const string &dlHash, vector<string> &args, output_callback *callback = NULL);

@@ -355,7 +355,7 @@ vector<string> utils::strSplit(const string &str, const char delim)
 	return parts;
 }
 
-string utils::fileSaveDialog(const string &filename)
+string utils::fileSaveDialog(const string &filename, const int filetype)
 {
 	//UI in multiple threads bad
 	std::lock_guard<std::mutex> lock(guiMutex);
@@ -378,23 +378,32 @@ string utils::fileSaveDialog(const string &filename)
 				// set the default file name in dialog
 				if (SUCCEEDED(pfd->SetFileName(utf8::widen(filename).c_str())))
 				{
-					// show dialog
-					HRESULT res = pfd->Show(GetForegroundWindow());
-					if(res == HRESULT_FROM_WIN32(ERROR_CANCELLED))
+					COMDLG_FILTERSPEC filetypeMKV[1] = {{L"Matroska Video File", L"*.mkv"}};
+					COMDLG_FILTERSPEC filetypeMP3[1] = {{L"MP3 Audio File", L"*.mp3"}};
+					COMDLG_FILTERSPEC filetypeALL[1] = {{L"All Files", L"*.*"}};
+
+					COMDLG_FILTERSPEC * filetypes[3] = {filetypeMKV, filetypeMP3, filetypeALL};
+
+					if (SUCCEEDED(pfd->SetFileTypes(1, filetypes[filetype])))
 					{
-						cancelled = true;
-					}
-					if (SUCCEEDED(res))
-					{
-						IShellItem *psiResult;
-						if (SUCCEEDED(pfd->GetResult(&psiResult)))
+						// show dialog
+						HRESULT res = pfd->Show(GetForegroundWindow());
+						if(res == HRESULT_FROM_WIN32(ERROR_CANCELLED))
 						{
-							PWSTR pszFilePath = NULL;
-							if (SUCCEEDED(psiResult->GetDisplayName(SIGDN_FILESYSPATH, &pszFilePath)))
+							cancelled = true;
+						}
+						if (SUCCEEDED(res))
+						{
+							IShellItem *psiResult;
+							if (SUCCEEDED(pfd->GetResult(&psiResult)))
 							{
-								path = utf8::narrow(pszFilePath);
+								PWSTR pszFilePath = NULL;
+								if (SUCCEEDED(psiResult->GetDisplayName(SIGDN_FILESYSPATH, &pszFilePath)))
+								{
+									path = utf8::narrow(pszFilePath);
+								}
+								psiResult->Release();
 							}
-							psiResult->Release();
 						}
 					}
 				}

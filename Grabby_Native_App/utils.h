@@ -20,7 +20,7 @@ public:
 	static DWORD execCmd(const string &exeName, const vector<string> &args, bool showConsole);
 	static void strReplaceAll(string &data, const string &toSearch, const string &replaceStr);
 	static vector<string> strSplit(const string &str, const char delim);
-	static string fileSaveDialog(const string &filename);
+	static string fileSaveDialog(const string &filename, const int filetype);
 	static string folderOpenDialog();
 	static string sanitizeFilename(const char* filename);
 	static vector<string> getEnvarNames();

@@ -8,6 +8,16 @@ ytdl_args::ytdl_args(const Json &msg)
 	string url = msg["url"].AsString();
 	args.push_back(url);
 
+	if(msg.Contains("embedThumbnail"))
+	{
+		embedThumbnail = true;
+	}
+
+	if(msg.Contains("embedSubs"))
+	{
+		embedSubs = true;
+	}
+
 	if(msg.Contains("proxy"))
 	{
 		string proxy = msg["proxy"].AsString();
@@ -63,6 +73,11 @@ vector<string> ytdl_video::getArgs()
 	args.push_back(formatFull);
 	args.push_back("--merge-output-format");
 	args.push_back("mkv");
+	//to make audio more compatible with devices
+	args.push_back("--postprocessor-args");
+	args.push_back("ffmpeg:-c:a aac -ac 2 -b:a 128k");
+	//option-based args
+	if(embedSubs) args.push_back("--embed-subs");
 
 	return args;
 }
@@ -80,6 +95,8 @@ vector<string> ytdl_audio::getArgs()
 	args.push_back("--extract-audio");
 	args.push_back("--audio-format");
 	args.push_back("mp3");
+	//option-based args
+	if(embedThumbnail) args.push_back("--embed-thumbnail");
 
 	return args;
 }
@@ -104,6 +121,11 @@ vector<string> ytdl_playlist_video::getArgs()
 	args.push_back("bestvideo[vcodec*=avc]+bestaudio");
 	args.push_back("--merge-output-format");
 	args.push_back("mkv");
+	//to make audio more compatible with devices
+	args.push_back("--postprocessor-args");
+	args.push_back("ffmpeg:-c:a aac -ac 2 -b:a 128k");
+	//option-based args
+	if(embedSubs) args.push_back("--embed-subs");
 
 	return args;
 }
@@ -125,6 +147,8 @@ vector<string> ytdl_playlist_audio::getArgs()
 	args.push_back("--extract-audio");
 	args.push_back("--audio-format");
 	args.push_back("mp3");
+	//option-based args
+	if(embedThumbnail) args.push_back("--embed-thumbnail");
 
 	return args;
 }

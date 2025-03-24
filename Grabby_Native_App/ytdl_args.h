@@ -1,6 +1,7 @@
 #pragma once
 
 #include "jsonla.h"
+#include "defines.h"
 
 using namespace std;
 using namespace ggicci;
@@ -9,6 +10,8 @@ class ytdl_args
 {
 	protected:
 		vector<string> args;
+		bool embedThumbnail;
+		bool embedSubs;
 	public:
 		ytdl_args(const Json &msg);
 		virtual ~ytdl_args(void);

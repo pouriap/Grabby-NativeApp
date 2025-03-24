@@ -33,7 +33,7 @@ using namespace std;
 using namespace ggicci;
 using namespace base64;
 
-string versionStr = "0.62.12";
+string versionStr = "0.63.0";
 
 int wmain(int argc, WCHAR *argv[], WCHAR *envp[])
 {
@@ -271,15 +271,19 @@ void handle_ytdlget(const Json &msg)
 		filename = msg["filename"].AsString();
 	}
 
+	int filetype = FILETYPE_ALL;
+
 	ytdl_args *arger;
 
 	if(type == YTDLTYP_VID)
 	{ 
 		arger = new ytdl_video(msg);
+		filetype = FILETYPE_MKV;
 	}
 	else if(type == YTDLTYP_AUD)
 	{
 		arger = new ytdl_audio(msg);
+		filetype = FILETYPE_MP3;
 	}
 	else if(type == YTDLTYP_PLVID)
 	{
@@ -290,7 +294,7 @@ void handle_ytdlget(const Json &msg)
 		arger = new ytdl_playlist_audio(msg);
 	}
 
-	std::thread th1(ytdl_get_th, url, dlHash, arger, filename);
+	std::thread th1(ytdl_get_th, url, dlHash, arger, filename, filetype);
 	th1.detach();
 }
 
@@ -353,7 +357,7 @@ void custom_cmd_th(const string exeName, vector<string> args, const string filen
 				throw grb_exception_gui("You have enabled the save-as dialog but you haven't specified [OUTPUT] in your arguments");
 			}
 
-			savePath = utils::fileSaveDialog(filename);
+			savePath = utils::fileSaveDialog(filename, FILETYPE_ALL);
 
 			// if user chose cancel in browse dialog do nothing
 			if(savePath.length() == 0)
@@ -481,7 +485,7 @@ void ytdl_info_th(const string url, const string dlHash, ytdl_args *arger)
 	delete arger;
 }
 
-void ytdl_get_th(const string url, const string dlHash, ytdl_args *arger, const string filename)
+void ytdl_get_th(const string url, const string dlHash, ytdl_args *arger, const string filename, const int filetype)
 {
 	try
 	{
@@ -490,7 +494,7 @@ void ytdl_get_th(const string url, const string dlHash, ytdl_args *arger, const 
 		// if it's a single video
 		if(filename.length() > 0)
 		{
-			savePath = utils::fileSaveDialog(utils::sanitizeFilename(filename.c_str()));
+			savePath = utils::fileSaveDialog(utils::sanitizeFilename(filename.c_str()), filetype);
 			if(savePath.length() > 0){
 				savePath.append(".%(ext)s");
 			}
